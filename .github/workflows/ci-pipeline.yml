@@ -21,19 +21,45 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '16'  # Specify Node.js version to use (modify this later as needed)
+        node-version: '16'  # Specify Node.js version to use (adjust if needed)
 
-    # Step 3: Install dependencies (just a placeholder, for now)
-    - name: Install dependencies (no actual dependencies yet)
+    # Step 3: Install backend dependencies (in the server directory)
+    - name: Install backend dependencies
       run: |
-        echo "No dependencies yet. Add backend/frontend dependencies later."
+        cd server
+        npm install
 
-    # Step 4: Run tests (no tests yet)
-    - name: Run tests (no tests yet)
+    # Step 4: Install frontend dependencies (in the client directory)
+    - name: Install frontend dependencies
       run: |
-        echo "No tests yet. Add tests once code is implemented."
+        cd client
+        npm install
 
-    # Step 5: Build the application (no build yet)
-    - name: Build application (no build yet)
+    # Step 5: Run backend tests (you can later add tests here)
+    - name: Run backend tests
       run: |
-        echo "No build steps yet. Add once the code is written."
+        cd server
+        echo "Backend tests will be added later."
+
+    # Step 6: Run frontend tests (you can later add tests here)
+    - name: Run frontend tests
+      run: |
+        cd client
+        echo "Frontend tests will be added later."
+
+    # Step 7: Build the backend (if applicable, you can add build scripts later)
+    - name: Build backend
+      run: |
+        cd server
+        echo "Backend build step will be added later."
+
+    # Step 8: Build the frontend (React app)
+    - name: Build frontend
+      run: |
+        cd client
+        npm run build
+
+    # Step 9: Deploy to production (optional)
+    - name: Deploy to production (optional)
+      run: |
+        echo "Deploying project..."  # Placeholder for deployment steps, add your actual deployment commands (e.g., Heroku, AWS, Netlify)
