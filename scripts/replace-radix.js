@@ -38,7 +38,7 @@ function processFile(filePath) {
     console.log(`Updated imports in ${filePath}`);
   }
 }
-
+//random
 function walkDir(dir) {
   const files = fs.readdirSync(dir);
   files.forEach(file => {
