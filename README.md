@@ -1,6 +1,6 @@
 # SpaceHubBookings
 
-A modern full-stack web application for managing space-related bookings and reservations. Built with React and Express, featuring a modern UI, real-time updates, and secure authentication.
+A modern full-stack web application for managing college labs and seminar halls reservations. Built with React and Express, featuring a modern UI, real-time updates, and secure authentication.
 
 ## Features
 
