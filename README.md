@@ -1,34 +1,138 @@
-# SpaceHub
+# SpaceHubBookings
 
-**SpaceHub** is a web application designed to help students and faculty members of universities book labs and seminar halls for their academic activities. The platform allows users to check the availability of spaces, book them based on the required time slots, and manage their reservations.
+A modern full-stack web application for managing space-related bookings and reservations. Built with React and Express, featuring a modern UI, real-time updates, and secure authentication.
 
-## Technologies Used
+## Features
 
-- **MERN Stack** (MongoDB, Express, React, Node.js)
-- **GitHub Actions** for Continuous Integration (CI)
-- **Heroku** (or your preferred platform) for deployment
+- 🚀 Modern React frontend with Vite
+- 🎨 Beautiful UI with Tailwind CSS and custom components
+- 🔒 Secure authentication system
+- 📊 Real-time data updates
+- 📱 Responsive design
+- 🗄️ PostgreSQL database with Drizzle ORM
+- 🔄 React Query for efficient data fetching
+- 📝 Form handling with React Hook Form
+- 📅 Date picking with React Day Picker
+- 📊 Data visualization with Recharts
 
-## Project Setup
-
-### Backend
-
-The backend is built using **Node.js** and **Express**. It handles the API for lab and seminar hall bookings, user authentication, and other backend functionalities.
+## Tech Stack
 
 ### Frontend
+- React 18
+- Vite
+- TailwindCSS
+- React Query
+- React Hook Form
+- React Day Picker
+- Recharts
+- Framer Motion
+- Lucide React icons
 
-The frontend is built using **React.js**. It provides a user-friendly interface for booking labs and seminar halls, managing reservations, and viewing available spaces.
+### Backend
+- Node.js
+- Express
+- Drizzle ORM
+- PostgreSQL (via Neon)
+- WebSocket (ws)
+- Passport.js for authentication
 
-## Installation Instructions
+## Prerequisites
 
-### Prerequisites
+- Node.js 18.x or later
+- npm 9.x or later
+- PostgreSQL database (or Neon account)
 
-- **Node.js** installed on your machine.
-- **npm** (Node Package Manager) for managing dependencies.
+## Getting Started
 
-### Clone the Repository
-
-To get started with the project, clone the repository to your local machine:
-
+1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/spacehub.git
-cd spacehub
+git clone [your-repo-url]
+cd SpaceHubBookings
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+Create a `.env` file in the root directory with:
+```env
+DATABASE_URL=your_database_url
+SESSION_SECRET=your_session_secret
+NODE_ENV=development
+```
+
+4. Start the development server:
+```bash
+npm run dev
+```
+
+The application will be available at http://localhost:4500
+
+## Project Structure
+
+```
+SpaceHubBookings/
+├── client/                 # Frontend React application
+│   ├── src/
+│   │   ├── components/    # Reusable React components
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── layouts/      # Layout components
+│   │   ├── lib/          # Utility functions
+│   │   ├── pages/        # Page components
+│   │   ├── App.jsx       # Root component
+│   │   └── main.jsx      # Entry point
+├── server/                # Backend Express server
+│   ├── routes/           # API routes
+│   └── index.js          # Server entry point
+├── shared/               # Shared code between client and server
+├── dist/                 # Production build output
+└── scripts/              # Utility scripts
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+
+## Development Guidelines
+
+### Code Style
+- Use ESLint for code linting
+- Follow the existing project structure
+- Write meaningful commit messages
+
+### Git Workflow
+1. Create a new branch for your feature
+2. Make your changes
+3. Run tests and ensure linting passes
+4. Submit a pull request
+
+### CI/CD
+
+The project uses GitHub Actions for continuous integration and deployment:
+- Automated testing
+- Linting checks
+- Security audits
+- Automated deployments to staging/production
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [Vite](https://vitejs.dev/)
+- [React](https://reactjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Express](https://expressjs.com/)
+- [Drizzle ORM](https://orm.drizzle.team/) 
