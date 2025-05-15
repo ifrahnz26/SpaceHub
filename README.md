@@ -9,11 +9,7 @@ A modern full-stack web application for managing space-related bookings and rese
 - 🔒 Secure authentication system
 - 📊 Real-time data updates
 - 📱 Responsive design
-- 🗄️ PostgreSQL database with Drizzle ORM
-- 🔄 React Query for efficient data fetching
-- 📝 Form handling with React Hook Form
-- 📅 Date picking with React Day Picker
-- 📊 Data visualization with Recharts
+
 
 ## Tech Stack
 
@@ -22,17 +18,10 @@ A modern full-stack web application for managing space-related bookings and rese
 - Vite
 - TailwindCSS
 - React Query
-- React Hook Form
-- React Day Picker
-- Recharts
-- Framer Motion
-- Lucide React icons
 
 ### Backend
 - Node.js
 - Express
-- Drizzle ORM
-- PostgreSQL (via Neon)
 - WebSocket (ws)
 - Passport.js for authentication
 
@@ -40,7 +29,6 @@ A modern full-stack web application for managing space-related bookings and rese
 
 - Node.js 18.x or later
 - npm 9.x or later
-- PostgreSQL database (or Neon account)
 
 ## Getting Started
 
