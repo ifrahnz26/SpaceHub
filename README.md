@@ -1,126 +1,139 @@
-# SpaceHubBookings
+# 🏫 University Laboratory & Seminar Hall Booking System
 
-A modern full-stack web application for managing college labs and seminar halls reservations. Built with React and Express, featuring a modern UI, real-time updates, and secure authentication.
+A role-based MERN stack web application for digital booking and management of university labs and seminar halls.
 
-## Features
+---
 
-- 🚀 Modern React frontend with Vite
-- 🎨 Beautiful UI with Tailwind CSS and custom components
-- 🔒 Secure authentication system
-- 📊 Real-time data updates
-- 📱 Responsive design
+## 📌 Project Overview
 
+This system allows students, faculty, venue incharges, and HODs to manage room bookings in a streamlined way.
 
-## Tech Stack
+### 👥 User Roles
 
-### Frontend
-- React 18
-- Vite
-- TailwindCSS
-- React Query
+- **Faculty**: Book venues, check slot availability.
+- **Venue Incharge**: Block/unblock slots for regular classes, add event summaries.
+- **HOD**: Approve or reject bookings for their department.
 
-### Backend
-- Node.js
-- Express
-- WebSocket (ws)
-- Passport.js for authentication
+---
 
-## Prerequisites
+## 🛠 Tech Stack
 
-- Node.js 18.x or later
-- npm 9.x or later
+- **Frontend**: React.js + Tailwind CSS
+- **Backend**: Node.js + Express.js
+- **Database**: MongoDB (via Mongoose)
+- **Authentication**: Passport.js (session-based)
+- **Dev Tools**: Postman, GitHub
 
-## Getting Started
+---
 
-1. Clone the repository:
+## 🚀 Getting Started
+
+### 1️⃣ Clone the repo
+
 ```bash
-git clone [your-repo-url]
-cd SpaceHubBookings
+git clone https://github.com/your-repo/university-booking-system.git
+cd university-booking-system
 ```
 
-2. Install dependencies:
+### 2️⃣ Backend Setup
+
 ```bash
+cd server
 npm install
-```
-
-3. Set up environment variables:
-Create a `.env` file in the root directory with:
-```env
-DATABASE_URL=your_database_url
-SESSION_SECRET=your_session_secret
-NODE_ENV=development
-```
-
-4. Start the development server:
-```bash
 npm run dev
 ```
 
-The application will be available at http://localhost:4500
+### 3️⃣ Frontend Setup
 
-## Project Structure
+```bash
+cd client
+npm install
+npm start
+```
+
+---
+
+## 📁 Folder Structure
 
 ```
-SpaceHubBookings/
-├── client/                 # Frontend React application
-│   ├── src/
-│   │   ├── components/    # Reusable React components
-│   │   ├── hooks/        # Custom React hooks
-│   │   ├── layouts/      # Layout components
-│   │   ├── lib/          # Utility functions
-│   │   ├── pages/        # Page components
-│   │   ├── App.jsx       # Root component
-│   │   └── main.jsx      # Entry point
-├── server/                # Backend Express server
-│   ├── routes/           # API routes
-│   └── index.js          # Server entry point
-├── shared/               # Shared code between client and server
-├── dist/                 # Production build output
-└── scripts/              # Utility scripts
+/client
+  /src/pages
+  /src/components
+  /src/context
+/server
+  /models
+  /routes
+  /middleware
+  server.js
+```
 
-## Available Scripts
+---
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
+## 🔐 Environment Variables
 
-## Development Guidelines
+Create a `.env` file in `/server`:
 
-### Code Style
-- Use ESLint for code linting
-- Follow the existing project structure
-- Write meaningful commit messages
+```
+MONGO_URI=mongodb://localhost:27017/university_booking
+SESSION_SECRET=yourSecretKey
+```
 
-### Git Workflow
-1. Create a new branch for your feature
-2. Make your changes
-3. Run tests and ensure linting passes
-4. Submit a pull request
+---
 
-### CI/CD
+## 📚 API Endpoints
 
-The project uses GitHub Actions for continuous integration and deployment:
-- Automated testing
-- Linting checks
-- Security audits
-- Automated deployments to staging/production
+### Auth
 
-## Contributing
+- `POST /api/auth/login`
+- `GET /api/auth/logout`
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Booking
 
-## License
+- `POST /api/bookings`
+- `GET /api/bookings/available-slots`
+- `PATCH /api/bookings/:id/status`
+- `PATCH /api/bookings/:id/summary`
+- `PATCH /api/bookings/:id/update-event`
+- `GET /api/bookings/my`
+- `GET /api/bookings/hod`
+- `GET /api/bookings/incharge`
+- `POST /api/bookings/block`
+- `DELETE /api/bookings/block/:id`
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
 
-## Acknowledgments
+## 🧠 Features
 
-- [Vite](https://vitejs.dev/)
-- [React](https://reactjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Express](https://expressjs.com/)
-- [Drizzle ORM](https://orm.drizzle.team/) 
+- ✅ Role-based dashboards
+- ✅ Slot conflict check
+- ✅ Block/Unblock slots
+- ✅ Add event summaries and metadata
+- ✅ Conditional UI rendering based on role
+
+---
+
+## 📦 Future Enhancements
+
+- 📊 Monthly analytics dashboard
+- 📅 Calendar integration
+- 📧 Email reminders
+- 🧾 Export to CSV/PDF
+- ☁️ Cloud deployment (Render/Vercel)
+
+---
+
+## 📸 UI Preview
+
+_(Include screenshots or a Loom demo link here)_
+
+---
+
+## 👥 Contributors
+
+- [Your Name / Team Name]
+
+---
+
+## 📃 License
+
+This project is licensed under the MIT License.

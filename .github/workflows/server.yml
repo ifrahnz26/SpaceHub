@@ -1,0 +1,94 @@
+name: Server CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+    
+    - name: Create .env file
+      run: |
+        cd server
+        echo "PORT=5001" > .env
+        echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
+        echo "NODE_ENV=test" >> .env
+    
+    - name: Run tests
+      run: |
+        cd server
+        npm test
+    
+    - name: Run linting
+      run: |
+        cd server
+        npm run lint
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+    
+    - name: Create production .env file
+      run: |
+        cd server
+        echo "PORT=${{ secrets.PORT }}" > .env
+        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+        echo "NODE_ENV=production" >> .env
+        echo "CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}" >> .env
+    
+    - name: Build
+      run: |
+        cd server
+        npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-build
+        path: server/dist 
