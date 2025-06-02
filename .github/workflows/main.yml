@@ -15,12 +15,13 @@ jobs:
         image: mongo:latest
         ports:
           - 27017:27017
+        options: --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'" --health-interval=10s --health-timeout=5s --health-retries=5
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup Node.js
+    - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -44,7 +45,10 @@ jobs:
         cd server
         npm ci
 
-    - name: Create .env for server
+    - name: Install Newman globally
+      run: npm install -g newman
+
+    - name: Create .env file for server
       run: |
         cd server
         echo "PORT=5001" > .env
@@ -66,20 +70,20 @@ jobs:
       run: |
         for i in {1..15}; do
           echo "⏳ Waiting for server (attempt $i)..."
-          if curl -s http://localhost:5001/health | grep '"status":"ok"'; then
+          if curl -s http://localhost:5001/api/auth/login | grep -q "Cannot POST"; then
             echo "✅ Server is up!"
             break
           fi
-          sleep 2
+          sleep 3
         done
 
-    - name: Log in and extract token
+    - name: Log in and extract JWT token
       id: login
       run: |
+        sudo apt-get install -y jq
         RESPONSE=$(curl -s -X POST http://localhost:5001/api/auth/login \
           -H "Content-Type: application/json" \
           -d '{"email": "hod@test.com", "password": "password123"}')
-
         echo "Login response: $RESPONSE"
         TOKEN=$(echo $RESPONSE | jq -r '.token')
         echo "TOKEN=$TOKEN" >> $GITHUB_ENV
@@ -90,7 +94,5 @@ jobs:
         mv postman/tmp.json postman/environment.json
 
     - name: Run API tests with Newman
-      uses: anthonyvscode/newman-action@v1
-      with:
-        collection: ./postman/collection.json
-        environment: ./postman/environment.json
+      run: |
+        newman run postman/collection.json -e postman/environment.json
