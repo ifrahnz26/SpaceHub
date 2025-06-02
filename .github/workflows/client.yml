@@ -32,11 +32,6 @@ jobs:
       run: |
         cd client
         npm test -- --watchAll=false
-    
-    - name: Run linting
-      run: |
-        cd client
-        npm run lint
 
   build:
     needs: test

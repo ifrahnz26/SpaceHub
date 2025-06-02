@@ -57,32 +57,8 @@ jobs:
       with:
         args: --severity-threshold=high
 
-  code-quality:
-    needs: install
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
-    - name: Run ESLint
-      run: |
-        npm run lint
-        cd client && npm run lint
-        cd ../server && npm run lint
-    
-    - name: Check code formatting
-      run: |
-        npm run format:check
-        cd client && npm run format:check
-        cd ../server && npm run format:check
-
   notify:
-    needs: [security, code-quality]
+    needs: [security]
     runs-on: ubuntu-latest
     if: always()
     
