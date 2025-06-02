@@ -1,71 +1,76 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient.js";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster.jsx";
-import { TooltipProvider } from "@/components/ui/tooltip.jsx";
-import NotFound from "@/pages/not-found.jsx";
-import AuthPage from "@/pages/auth-page.jsx";
-import Dashboard from "@/pages/dashboard.jsx";
-import NewBooking from "@/pages/new-booking.jsx";
-import MyBookings from "@/pages/my-bookings.jsx";
-import PendingApprovals from "@/pages/pending-approvals.jsx";
-import { ProtectedRoute } from "./lib/protected-route.jsx";
-import { AuthProvider, useAuth } from "./hooks/use-auth.jsx";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import NewBooking from "./pages/NewBooking";
+import MyBookings from "./pages/MyBookings";
+import VenueDashboard from "./pages/VenueDashboard";
+import VenueSchedule from "./pages/VenueSchedule";
+import UpdateVenueSchedule from "./pages/UpdateVenueSchedule";
+import UpdateEventDetails from "./pages/UpdateEventDetails";
+import EventDetails from "./pages/EventDetails";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import Layout from "./components/Layout";
 
-function Router() {
-  return (
-    <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/new-booking" component={NewBooking} />
-      <ProtectedRoute path="/my-bookings" component={MyBookings} />
-      <ProtectedRoute path="/pending-approvals" component={PendingApprovals} />
-      <Route path="/auth" component={AuthPage} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+function AppRoutes() {
+  const { user } = useAuth();
 
-// Debug component needs to be used inside the AuthProvider
-function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
-// Separate component to access auth context
-function AppContent() {
-  const { user, isLoading } = useAuth();
-  
-  return (
-    <TooltipProvider>
-      <Toaster />
-      <Router />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
       
-      {/* Debug auth state indicator */}
-      {import.meta.env.DEV && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            bottom: '10px', 
-            right: '10px', 
-            background: '#000', 
-            color: '#fff',
-            padding: '5px 10px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            zIndex: 9999,
-            opacity: 0.7
-          }}
-        >
-          <div>Auth: {isLoading ? 'Loading...' : user ? `✅ ${user.username}` : '❌ Not logged in'}</div>
-        </div>
-      )}
-    </TooltipProvider>
+      {/* Protected Routes */}
+      <Route element={<Layout />}>
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+        
+        {/* HOD Routes (Analytics Dashboard) */}
+        {user && user.role === "HOD" && (
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
+        )}
+
+        {/* Student & Faculty Routes */}
+        {user && (user.role === "Student" || user.role === "Faculty") && (
+          <>
+            <Route path="/new-booking" element={<NewBooking />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
+          </>
+        )}
+
+        {/* Venue Incharge Routes */}
+        {user && user.role === "Venue Incharge" && (
+          <>
+            <Route path="/venue/dashboard" element={<VenueDashboard />} />
+            <Route path="/venue/schedule" element={<VenueSchedule />} />
+            <Route path="/venue/update-schedule" element={<UpdateVenueSchedule />} />
+            <Route path="/venue/update-event" element={<UpdateEventDetails />} />
+            <Route path="/venue/event-details" element={<EventDetails />} />
+          </>
+        )}
+
+        {/* Faculty and HOD Routes */}
+        {user && (user.role === "Faculty" || user.role === "HOD") && (
+          <>
+            <Route path="/venue/schedule" element={<VenueSchedule />} />
+            <Route path="/venue/event-details" element={<EventDetails />} />
+          </>
+        )}
+
+        {/* Redirect to dashboard if no matching route */}
+        <Route path="*" element={<Navigate to="/dashboard" />} />
+      </Route>
+    </Routes>
   );
 }
 
-export default App;
+// Main App component that wraps everything with providers
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
+  );
+}
