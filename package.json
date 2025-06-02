@@ -27,6 +27,7 @@
     "install:server": "cd server && npm install"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "jest": "^29.7.0"
   }
 }
