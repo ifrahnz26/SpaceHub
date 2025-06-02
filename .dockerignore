@@ -1,0 +1,15 @@
+node_modules
+client/node_modules
+server/node_modules
+.dockerignore
+Dockerfile
+.env
+npm-debug.log
+.git
+.gitignore
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+README.md
+.DS_Store
