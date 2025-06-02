@@ -17,98 +17,119 @@ jobs:
           - 27017:27017
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-    - name: Install root dependencies
-      run: npm ci
+      - name: Install root dependencies
+        run: npm ci
 
-    - name: Install client dependencies
-      run: |
-        cd client
-        npm ci
+      - name: Install client dependencies
+        run: |
+          cd client
+          npm ci
 
-    - name: Run client tests
-      run: |
-        cd client
-        npm test -- --watchAll=false
+      - name: Run client tests
+        run: |
+          cd client
+          npm test -- --watchAll=false
 
-    - name: Install server dependencies
-      run: |
-        cd server
-        npm ci
+      - name: Install server dependencies
+        run: |
+          cd server
+          npm ci
 
-    - name: Create .env for server
-      run: |
-        cd server
-        echo "PORT=5001" > .env
-        echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
-        echo "JWT_SECRET=supersecretkey123" >> .env
-        echo "NODE_ENV=test" >> .env
+      - name: Create .env for server
+        run: |
+          cd server
+          echo "PORT=5001" > .env
+          echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
+          echo "JWT_SECRET=supersecretkey123" >> .env
+          echo "NODE_ENV=test" >> .env
 
+  codacy-analysis:
+    needs: trivy-scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Codacy CLI
+        run: |
+          curl -Ls https://coverage.codacy.com/get.sh > codacy-coverage.sh
+          chmod +x codacy-coverage.sh
+
+      - name: Run Codacy Analysis
+        run: |
+          ./codacy-coverage.sh report -l JavaScript || echo "Codacy completed with issues"
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          
   security-scan:
     needs: install-and-test
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Run npm audit
-      run: |
-        npm audit || true
-        cd client && npm audit || true
-        cd ../server && npm audit || true
+      - name: Run npm audit
+        run: |
+          npm audit || true
+          cd client && npm audit || true
+          cd ../server && npm audit || true
 
   docker-build-push:
     needs: security-scan
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Build and tag client image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest ./client
+      - name: Build and tag client image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest ./client
 
-    - name: Build and tag server image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest ./server
+      - name: Build and tag server image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest ./server
 
-    - name: Push client image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
+      - name: Push client image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
 
-    - name: Push server image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+      - name: Push server image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
 
   trivy-scan:
     needs: docker-build-push
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install Trivy
-      run: |
-        sudo apt-get update
-        sudo apt-get install wget apt-transport-https gnupg lsb-release -y
-        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
-        sudo apt-get update
-        sudo apt-get install trivy -y
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
 
-    - name: Scan client Docker image for vulnerabilities
-      run: |
-        docker pull ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
-        trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
+      - name: Scan client Docker image for vulnerabilities
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
+          trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
 
-    - name: Scan server Docker image for vulnerabilities
-      run: |
-        docker pull ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
-        trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+      - name: Scan server Docker image for vulnerabilities
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+          trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+
+  
