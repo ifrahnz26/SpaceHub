@@ -88,3 +88,27 @@ jobs:
 
     - name: Push server image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+
+  trivy-scan:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy -y
+
+    - name: Scan client Docker image for vulnerabilities
+      run: |
+        docker pull ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
+        trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
+
+    - name: Scan server Docker image for vulnerabilities
+      run: |
+        docker pull ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+        trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
