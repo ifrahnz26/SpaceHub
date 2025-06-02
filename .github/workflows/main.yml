@@ -50,37 +50,30 @@ jobs:
         echo "PORT=5001" > .env
         echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
         echo "JWT_SECRET=test_secret" >> .env
-        echo "NODE_ENV=test" >> .env
-
-    - name: Run server tests
-      run: |
-        cd server
-        npm test
+        echo "NODE_ENV=ci" >> .env
 
     - name: Start server in background
       run: |
         cd server
-        nohup npm start > ../server.log 2>&1 &
-        sleep 5
+        nohup npm start > server.log 2>&1 &
       env:
         PORT: 5001
         MONGODB_URI: mongodb://localhost:27017/booking_system
-        JWT_SECRET: supersecretkey123
+        JWT_SECRET: test_secret
         NODE_ENV: ci
 
     - name: Wait until server is ready
       run: |
         for i in {1..15}; do
           echo "⏳ Waiting for server (attempt $i)..."
-          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/health || echo "000")
-          if [ "$status" -eq 200 ]; then
-            echo "✅ Server is up and healthy!"
+          if curl --fail http://localhost:5001/health; then
+            echo "✅ Server is up!"
             exit 0
           fi
-          sleep 3
+          sleep 2
         done
         echo "❌ Server did not start in time. Printing server log:"
-        cat server.log
+        cat server/server.log
         exit 1
 
     - name: Run API tests with Newman

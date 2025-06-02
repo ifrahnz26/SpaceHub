@@ -122,8 +122,8 @@ process.on('unhandledRejection', (err) => {
 });
 
 // Start the server only if not in test mode
-if (process.env.NODE_ENV !== 'test') {
+//if (process.env.NODE_ENV !== 'test') {
   connectDB();
-}
+//}
 
 export default app;
