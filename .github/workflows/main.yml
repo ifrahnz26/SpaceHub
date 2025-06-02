@@ -57,6 +57,25 @@ jobs:
         cd server
         npm test
 
+    - name: Start server in background
+      run: |
+        cd server
+        npm start &
+      env:
+        PORT: 5001
+        MONGODB_URI: mongodb://localhost:27017/booking_system
+        JWT_SECRET: test_secret
+        NODE_ENV: test
+
+    - name: Wait for server to be ready
+      run: sleep 5
+
+    - name: Run API tests with Newman
+      uses: matt-ball/newman-action@v1
+      with:
+        collection: ./postman/collection.json
+        environment: ./postman/environment.json
+
   security-scan:
     needs: install-and-test
     runs-on: ubuntu-latest
