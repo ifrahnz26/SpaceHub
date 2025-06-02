@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
+// import path from 'path';
 import Event from '../models/Event.js';
 import Resource from '../models/Resource.js'; // Import Resource model to populate venue name
 
