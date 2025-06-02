@@ -27,14 +27,9 @@ const mockUser = {
 };
 
 const renderWithProviders = (component) => {
-  // Mock localStorage.getItem to return JSON stringified user data
   mockLocalStorage.getItem.mockImplementation((key) => {
-    if (key === 'user') {
-      return JSON.stringify(mockUser);
-    }
-    if (key === 'token') {
-      return 'mock-token';
-    }
+    if (key === 'user') return JSON.stringify(mockUser);
+    if (key === 'token') return 'mock-token';
     return null;
   });
 
@@ -49,7 +44,6 @@ const renderWithProviders = (component) => {
 
 describe('HOD Dashboard Page', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
   });
 
@@ -84,26 +78,23 @@ describe('HOD Dashboard Page', () => {
       }
     ];
 
-    global.fetch.mockResolvedValueOnce({
+    fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockBookings
     });
 
     renderWithProviders(<HodDashboard />);
 
-    // Check for header content
-    await screen.findByText('HOD Dashboard');
-    await screen.findByText('Department: Computer Science');
-    await screen.findByText('Total Bookings:');
-    await screen.findByText('2', { selector: 'span.text-xl' });
+    expect(await screen.findByText('HOD Dashboard')).toBeInTheDocument();
+    expect(await screen.findByText('Department: Computer Science')).toBeInTheDocument();
+    expect(await screen.findByText('Total Bookings:')).toBeInTheDocument();
+    expect(await screen.findByText('2')).toBeInTheDocument();
 
-    // Check for filter buttons
     expect(screen.getByRole('button', { name: /All 2/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Pending 1/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Approved 1/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Rejected 0/i })).toBeInTheDocument();
 
-    // Check for booking details
     expect(screen.getByText('Room 101')).toBeInTheDocument();
     expect(screen.getByText('Faculty Meeting')).toBeInTheDocument();
     expect(screen.getByText(/Jane Smith/)).toBeInTheDocument();
@@ -112,13 +103,9 @@ describe('HOD Dashboard Page', () => {
   });
 
   it('handles error state', async () => {
-    global.fetch.mockRejectedValueOnce(new Error('Failed to fetch'));
-
+    fetch.mockRejectedValueOnce(new Error('Failed to fetch'));
     renderWithProviders(<HodDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to connect to server')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Failed to connect to server')).toBeInTheDocument();
   });
 
   it('updates booking status', async () => {
@@ -136,7 +123,7 @@ describe('HOD Dashboard Page', () => {
       }
     ];
 
-    global.fetch
+    fetch
       .mockResolvedValueOnce({
         ok: true,
         json: async () => mockBookings
@@ -147,17 +134,11 @@ describe('HOD Dashboard Page', () => {
       });
 
     renderWithProviders(<HodDashboard />);
+    expect(await screen.findByText('Room 101')).toBeInTheDocument();
 
-    // Wait for bookings to load
-    await waitFor(() => {
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
-    });
-
-    // Click approve button
     const approveButton = screen.getByRole('button', { name: 'Approve' });
     fireEvent.click(approveButton);
 
-    // Check if status was updated
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
         'http://localhost:5001/api/bookings/1/status',
@@ -199,33 +180,22 @@ describe('HOD Dashboard Page', () => {
       }
     ];
 
-    global.fetch.mockResolvedValueOnce({
+    fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockBookings
     });
 
     renderWithProviders(<HodDashboard />);
 
-    // Wait for bookings to load
-    await waitFor(() => {
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
-      expect(screen.getByText('Room 102')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Room 101')).toBeInTheDocument();
+    expect(await screen.findByText('Room 102')).toBeInTheDocument();
 
-    // Click Pending filter
-    const pendingButton = screen.getByRole('button', { name: /Pending 1/i });
-    fireEvent.click(pendingButton);
-
-    // Check if only pending bookings are shown
-    await screen.findByText('Room 101');
+    fireEvent.click(screen.getByRole('button', { name: /Pending 1/i }));
+    expect(await screen.findByText('Room 101')).toBeInTheDocument();
     expect(screen.queryByText('Room 102')).not.toBeInTheDocument();
 
-    // Click Approved filter
-    const approvedButton = screen.getByRole('button', { name: /Approved 1/i });
-    fireEvent.click(approvedButton);
-
-    // Check if only approved bookings are shown
+    fireEvent.click(screen.getByRole('button', { name: /Approved 1/i }));
+    expect(await screen.findByText('Room 102')).toBeInTheDocument();
     expect(screen.queryByText('Room 101')).not.toBeInTheDocument();
-    await screen.findByText('Room 102');
   });
-}); 
+});
