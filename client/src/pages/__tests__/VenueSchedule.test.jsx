@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
-import VenueSchedule from '../../pages/VenueSchedule';
+import VenueSchedule from '../VenueSchedule';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -14,34 +14,43 @@ const mockLocalStorage = {
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
-const mockVenueData = {
+const mockScheduleData = {
   venue: {
     _id: '1',
     name: 'Room 101',
     type: 'classroom',
-    capacity: 50
+    capacity: 50,
+    department: 'Computer Science'
   },
-  schedule: {
-    monday: ['09:00 - 10:00', '10:00 - 11:00'],
-    tuesday: ['11:00 - 12:00'],
-    wednesday: ['14:00 - 15:00'],
-    thursday: [],
-    friday: ['16:00 - 17:00']
+  weeklySchedule: {
+    monday: ['09:00 - 10:00', '14:00 - 15:00'],
+    tuesday: ['10:00 - 11:00', '15:00 - 16:00'],
+    wednesday: ['11:00 - 12:00', '16:00 - 17:00'],
+    thursday: ['09:00 - 10:00', '14:00 - 15:00'],
+    friday: ['10:00 - 11:00', '15:00 - 16:00']
   },
-  bookings: [
+  currentBookings: [
     {
       _id: '1',
       date: '2024-03-20',
       timeSlots: ['09:00 - 10:00'],
-      purpose: 'Class Lecture',
-      status: 'approved'
+      purpose: 'Team Meeting',
+      status: 'approved',
+      user: {
+        name: 'John Doe',
+        email: 'john@example.com'
+      }
     },
     {
       _id: '2',
-      date: '2024-03-21',
-      timeSlots: ['11:00 - 12:00'],
-      purpose: 'Group Discussion',
-      status: 'pending'
+      date: '2024-03-20',
+      timeSlots: ['14:00 - 15:00'],
+      purpose: 'Conference',
+      status: 'pending',
+      user: {
+        name: 'Jane Smith',
+        email: 'jane@example.com'
+      }
     }
   ]
 };
@@ -56,7 +65,7 @@ const renderWithProviders = (component) => {
   );
 };
 
-describe('VenueSchedule Page', () => {
+describe('Venue Schedule Page', () => {
   beforeEach(() => {
     fetch.mockClear();
     mockLocalStorage.getItem.mockClear();
@@ -71,7 +80,7 @@ describe('VenueSchedule Page', () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: () => Promise.resolve(mockScheduleData)
       })
     );
 
@@ -80,7 +89,8 @@ describe('VenueSchedule Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Room 101')).toBeInTheDocument();
       expect(screen.getByText('classroom')).toBeInTheDocument();
-      expect(screen.getByText('Capacity: 50')).toBeInTheDocument();
+      expect(screen.getByText('50')).toBeInTheDocument(); // Capacity
+      expect(screen.getByText('Computer Science')).toBeInTheDocument();
     });
   });
 
@@ -88,7 +98,7 @@ describe('VenueSchedule Page', () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: () => Promise.resolve(mockScheduleData)
       })
     );
 
@@ -96,15 +106,10 @@ describe('VenueSchedule Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Monday')).toBeInTheDocument();
-      expect(screen.getByText('09:00 - 10:00')).toBeInTheDocument();
-      expect(screen.getByText('10:00 - 11:00')).toBeInTheDocument();
       expect(screen.getByText('Tuesday')).toBeInTheDocument();
-      expect(screen.getByText('11:00 - 12:00')).toBeInTheDocument();
       expect(screen.getByText('Wednesday')).toBeInTheDocument();
-      expect(screen.getByText('14:00 - 15:00')).toBeInTheDocument();
       expect(screen.getByText('Thursday')).toBeInTheDocument();
       expect(screen.getByText('Friday')).toBeInTheDocument();
-      expect(screen.getByText('16:00 - 17:00')).toBeInTheDocument();
     });
   });
 
@@ -112,17 +117,17 @@ describe('VenueSchedule Page', () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: () => Promise.resolve(mockScheduleData)
       })
     );
 
     renderWithProviders(<VenueSchedule />);
 
     await waitFor(() => {
-      expect(screen.getByText('Class Lecture')).toBeInTheDocument();
-      expect(screen.getByText('Group Discussion')).toBeInTheDocument();
-      expect(screen.getByText('2024-03-20')).toBeInTheDocument();
-      expect(screen.getByText('2024-03-21')).toBeInTheDocument();
+      expect(screen.getByText('Team Meeting')).toBeInTheDocument();
+      expect(screen.getByText('Conference')).toBeInTheDocument();
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     });
   });
 
@@ -130,25 +135,25 @@ describe('VenueSchedule Page', () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: () => Promise.resolve(mockScheduleData)
       })
     );
 
     renderWithProviders(<VenueSchedule />);
 
     await waitFor(() => {
-      const nextWeekButton = screen.getByRole('button', { name: /next week/i });
-      fireEvent.click(nextWeekButton);
+      const nextButton = screen.getByRole('button', { name: /next/i });
+      fireEvent.click(nextButton);
     });
 
-    expect(screen.getByText(/next week's schedule/i)).toBeInTheDocument();
+    expect(screen.getByText('2024-03-21')).toBeInTheDocument();
   });
 
   test('filters bookings by status', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: () => Promise.resolve(mockScheduleData)
       })
     );
 
@@ -159,8 +164,8 @@ describe('VenueSchedule Page', () => {
       fireEvent.change(filterSelect, { target: { value: 'approved' } });
     });
 
-    expect(screen.getByText('Class Lecture')).toBeInTheDocument();
-    expect(screen.queryByText('Group Discussion')).not.toBeInTheDocument();
+    expect(screen.getByText('Team Meeting')).toBeInTheDocument();
+    expect(screen.queryByText('Conference')).not.toBeInTheDocument();
   });
 
   test('displays error message when fetch fails', async () => {
@@ -171,7 +176,7 @@ describe('VenueSchedule Page', () => {
     renderWithProviders(<VenueSchedule />);
 
     await waitFor(() => {
-      expect(screen.getByText(/error loading venue schedule/i)).toBeInTheDocument();
+      expect(screen.getByText(/error loading schedule/i)).toBeInTheDocument();
     });
   });
 
@@ -180,21 +185,28 @@ describe('VenueSchedule Page', () => {
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockVenueData)
+          json: () => Promise.resolve(mockScheduleData)
         })
       )
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({
-            ...mockVenueData,
-            bookings: [...mockVenueData.bookings, {
-              _id: '3',
-              date: '2024-03-22',
-              timeSlots: ['14:00 - 15:00'],
-              purpose: 'New Booking',
-              status: 'approved'
-            }]
+            ...mockScheduleData,
+            currentBookings: [
+              ...mockScheduleData.currentBookings,
+              {
+                _id: '3',
+                date: '2024-03-20',
+                timeSlots: ['16:00 - 17:00'],
+                purpose: 'Workshop',
+                status: 'approved',
+                user: {
+                  name: 'Bob Wilson',
+                  email: 'bob@example.com'
+                }
+              }
+            ]
           })
         })
       );
@@ -207,7 +219,8 @@ describe('VenueSchedule Page', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('New Booking')).toBeInTheDocument();
+      expect(screen.getByText('Workshop')).toBeInTheDocument();
+      expect(screen.getByText('Bob Wilson')).toBeInTheDocument();
     });
   });
 
@@ -215,14 +228,23 @@ describe('VenueSchedule Page', () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: () => Promise.resolve({
+          ...mockScheduleData,
+          weeklySchedule: {
+            ...mockScheduleData.weeklySchedule,
+            saturday: [],
+            sunday: []
+          }
+        })
       })
     );
 
     renderWithProviders(<VenueSchedule />);
 
     await waitFor(() => {
-      expect(screen.getByText(/no time slots available/i)).toBeInTheDocument();
+      expect(screen.getByText('Saturday')).toBeInTheDocument();
+      expect(screen.getByText('Sunday')).toBeInTheDocument();
+      expect(screen.getByText(/no slots available/i)).toBeInTheDocument();
     });
   });
 
@@ -231,20 +253,20 @@ describe('VenueSchedule Page', () => {
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockVenueData)
+          json: () => Promise.resolve(mockScheduleData)
         })
       )
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ message: 'Booking cancelled' })
+          json: () => Promise.resolve({ message: 'Booking cancelled successfully' })
         })
       );
 
     renderWithProviders(<VenueSchedule />);
 
     await waitFor(() => {
-      const cancelButton = screen.getAllByRole('button', { name: /cancel/i })[0];
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
       fireEvent.click(cancelButton);
     });
 

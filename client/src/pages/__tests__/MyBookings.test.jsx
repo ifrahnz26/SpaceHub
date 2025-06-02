@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
-import MyBookings from '../../pages/MyBookings';
+import MyBookings from '../MyBookings';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -18,27 +18,27 @@ const mockBookingsData = {
   bookings: [
     {
       _id: '1',
-      resource: { name: 'Room 101' },
       date: '2024-03-20',
       timeSlots: ['09:00 - 10:00'],
-      purpose: 'Class Lecture',
-      status: 'approved'
+      purpose: 'Team Meeting',
+      status: 'approved',
+      venue: {
+        _id: '1',
+        name: 'Room 101',
+        type: 'classroom'
+      }
     },
     {
       _id: '2',
-      resource: { name: 'Room 102' },
       date: '2024-03-21',
-      timeSlots: ['10:00 - 11:00'],
-      purpose: 'Group Discussion',
-      status: 'pending'
-    },
-    {
-      _id: '3',
-      resource: { name: 'Room 103' },
-      date: '2024-03-22',
-      timeSlots: ['11:00 - 12:00'],
-      purpose: 'Meeting',
-      status: 'rejected'
+      timeSlots: ['14:00 - 15:00'],
+      purpose: 'Conference',
+      status: 'pending',
+      venue: {
+        _id: '2',
+        name: 'Main Hall',
+        type: 'auditorium'
+      }
     }
   ]
 };
@@ -53,7 +53,7 @@ const renderWithProviders = (component) => {
   );
 };
 
-describe('MyBookings Page', () => {
+describe('My Bookings Page', () => {
   beforeEach(() => {
     fetch.mockClear();
     mockLocalStorage.getItem.mockClear();
@@ -75,9 +75,10 @@ describe('MyBookings Page', () => {
     renderWithProviders(<MyBookings />);
 
     await waitFor(() => {
-      expect(screen.getByText('Class Lecture')).toBeInTheDocument();
-      expect(screen.getByText('Group Discussion')).toBeInTheDocument();
-      expect(screen.getByText('Meeting')).toBeInTheDocument();
+      expect(screen.getByText('Team Meeting')).toBeInTheDocument();
+      expect(screen.getByText('Conference')).toBeInTheDocument();
+      expect(screen.getByText('Room 101')).toBeInTheDocument();
+      expect(screen.getByText('Main Hall')).toBeInTheDocument();
     });
   });
 
@@ -96,9 +97,27 @@ describe('MyBookings Page', () => {
       fireEvent.change(filterSelect, { target: { value: 'approved' } });
     });
 
-    expect(screen.getByText('Class Lecture')).toBeInTheDocument();
-    expect(screen.queryByText('Group Discussion')).not.toBeInTheDocument();
-    expect(screen.queryByText('Meeting')).not.toBeInTheDocument();
+    expect(screen.getByText('Team Meeting')).toBeInTheDocument();
+    expect(screen.queryByText('Conference')).not.toBeInTheDocument();
+  });
+
+  test('filters bookings by date', async () => {
+    fetch.mockImplementationOnce(() => 
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockBookingsData)
+      })
+    );
+
+    renderWithProviders(<MyBookings />);
+
+    await waitFor(() => {
+      const dateInput = screen.getByLabelText(/filter by date/i);
+      fireEvent.change(dateInput, { target: { value: '2024-03-20' } });
+    });
+
+    expect(screen.getByText('Team Meeting')).toBeInTheDocument();
+    expect(screen.queryByText('Conference')).not.toBeInTheDocument();
   });
 
   test('handles booking cancellation', async () => {
@@ -112,14 +131,14 @@ describe('MyBookings Page', () => {
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ message: 'Booking cancelled' })
+          json: () => Promise.resolve({ message: 'Booking cancelled successfully' })
         })
       );
 
     renderWithProviders(<MyBookings />);
 
     await waitFor(() => {
-      const cancelButton = screen.getAllByRole('button', { name: /cancel/i })[0];
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
       fireEvent.click(cancelButton);
     });
 
@@ -140,7 +159,7 @@ describe('MyBookings Page', () => {
     });
   });
 
-  test('handles date range filtering', async () => {
+  test('handles refresh functionality', async () => {
     fetch
       .mockImplementationOnce(() => 
         Promise.resolve({
@@ -152,7 +171,21 @@ describe('MyBookings Page', () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({
-            bookings: [mockBookingsData.bookings[0]]
+            bookings: [
+              ...mockBookingsData.bookings,
+              {
+                _id: '3',
+                date: '2024-03-22',
+                timeSlots: ['16:00 - 17:00'],
+                purpose: 'Workshop',
+                status: 'approved',
+                venue: {
+                  _id: '3',
+                  name: 'Lab 101',
+                  type: 'laboratory'
+                }
+              }
+            ]
           })
         })
       );
@@ -160,19 +193,17 @@ describe('MyBookings Page', () => {
     renderWithProviders(<MyBookings />);
 
     await waitFor(() => {
-      const startDateInput = screen.getByLabelText(/start date/i);
-      const endDateInput = screen.getByLabelText(/end date/i);
-
-      fireEvent.change(startDateInput, { target: { value: '2024-03-20' } });
-      fireEvent.change(endDateInput, { target: { value: '2024-03-20' } });
+      const refreshButton = screen.getByRole('button', { name: /refresh/i });
+      fireEvent.click(refreshButton);
     });
 
-    expect(screen.getByText('Class Lecture')).toBeInTheDocument();
-    expect(screen.queryByText('Group Discussion')).not.toBeInTheDocument();
-    expect(screen.queryByText('Meeting')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Workshop')).toBeInTheDocument();
+      expect(screen.getByText('Lab 101')).toBeInTheDocument();
+    });
   });
 
-  test('displays empty state when no bookings found', async () => {
+  test('displays empty state when no bookings', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -187,43 +218,7 @@ describe('MyBookings Page', () => {
     });
   });
 
-  test('handles refresh functionality', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockBookingsData)
-        })
-      )
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({
-            bookings: [...mockBookingsData.bookings, {
-              _id: '4',
-              resource: { name: 'Room 104' },
-              date: '2024-03-23',
-              timeSlots: ['13:00 - 14:00'],
-              purpose: 'New Booking',
-              status: 'approved'
-            }]
-          })
-        })
-      );
-
-    renderWithProviders(<MyBookings />);
-
-    await waitFor(() => {
-      const refreshButton = screen.getByRole('button', { name: /refresh/i });
-      fireEvent.click(refreshButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('New Booking')).toBeInTheDocument();
-    });
-  });
-
-  test('displays booking details correctly', async () => {
+  test('navigates to new booking page', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -234,10 +229,10 @@ describe('MyBookings Page', () => {
     renderWithProviders(<MyBookings />);
 
     await waitFor(() => {
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
-      expect(screen.getByText('2024-03-20')).toBeInTheDocument();
-      expect(screen.getByText('09:00 - 10:00')).toBeInTheDocument();
-      expect(screen.getByText(/approved/i)).toBeInTheDocument();
+      const newBookingButton = screen.getByRole('button', { name: /new booking/i });
+      fireEvent.click(newBookingButton);
     });
+
+    expect(window.location.pathname).toBe('/new-booking');
   });
 }); 

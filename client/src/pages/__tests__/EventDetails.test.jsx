@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
-import EventDetails from '../../pages/EventDetails';
+import EventDetails from '../EventDetails';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -18,28 +18,29 @@ const mockEventData = {
   event: {
     _id: '1',
     title: 'Annual Conference',
-    description: 'A conference about technology',
-    date: '2024-03-20',
-    timeSlots: ['09:00 - 10:00', '10:00 - 11:00'],
+    description: 'A conference for all departments',
+    startDate: '2024-03-20',
+    endDate: '2024-03-22',
     venue: {
-      name: 'Room 101',
-      capacity: 50
+      _id: '1',
+      name: 'Main Hall',
+      type: 'auditorium',
+      capacity: 200
     },
     organizer: {
+      _id: '1',
       name: 'John Doe',
-      department: 'Computer Science'
+      email: 'john@example.com'
     },
     status: 'approved',
-    attendees: 30
-  },
-  relatedEvents: [
-    {
-      _id: '2',
-      title: 'Workshop',
-      date: '2024-03-21',
-      venue: { name: 'Room 102' }
-    }
-  ]
+    attendees: [
+      {
+        _id: '2',
+        name: 'Jane Smith',
+        email: 'jane@example.com'
+      }
+    ]
+  }
 };
 
 const renderWithProviders = (component) => {
@@ -52,7 +53,7 @@ const renderWithProviders = (component) => {
   );
 };
 
-describe('EventDetails Page', () => {
+describe('Event Details Page', () => {
   beforeEach(() => {
     fetch.mockClear();
     mockLocalStorage.getItem.mockClear();
@@ -75,13 +76,46 @@ describe('EventDetails Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Annual Conference')).toBeInTheDocument();
-      expect(screen.getByText('A conference about technology')).toBeInTheDocument();
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
+      expect(screen.getByText('A conference for all departments')).toBeInTheDocument();
+      expect(screen.getByText('2024-03-20')).toBeInTheDocument();
+      expect(screen.getByText('2024-03-22')).toBeInTheDocument();
+    });
+  });
+
+  test('displays venue information', async () => {
+    fetch.mockImplementationOnce(() => 
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockEventData)
+      })
+    );
+
+    renderWithProviders(<EventDetails />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Main Hall')).toBeInTheDocument();
+      expect(screen.getByText('auditorium')).toBeInTheDocument();
+      expect(screen.getByText('200')).toBeInTheDocument(); // Capacity
+    });
+  });
+
+  test('displays organizer information', async () => {
+    fetch.mockImplementationOnce(() => 
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockEventData)
+      })
+    );
+
+    renderWithProviders(<EventDetails />);
+
+    await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('john@example.com')).toBeInTheDocument();
     });
   });
 
-  test('displays event time slots', async () => {
+  test('displays attendees list', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -92,24 +126,8 @@ describe('EventDetails Page', () => {
     renderWithProviders(<EventDetails />);
 
     await waitFor(() => {
-      expect(screen.getByText('09:00 - 10:00')).toBeInTheDocument();
-      expect(screen.getByText('10:00 - 11:00')).toBeInTheDocument();
-    });
-  });
-
-  test('displays related events', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockEventData)
-      })
-    );
-
-    renderWithProviders(<EventDetails />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Workshop')).toBeInTheDocument();
-      expect(screen.getByText('Room 102')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+      expect(screen.getByText('jane@example.com')).toBeInTheDocument();
     });
   });
 
@@ -124,7 +142,7 @@ describe('EventDetails Page', () => {
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ message: 'Successfully registered' })
+          json: () => Promise.resolve({ message: 'Successfully registered for event' })
         })
       );
 
@@ -136,7 +154,7 @@ describe('EventDetails Page', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/successfully registered/i)).toBeInTheDocument();
+      expect(screen.getByText(/successfully registered for event/i)).toBeInTheDocument();
     });
   });
 
@@ -151,14 +169,14 @@ describe('EventDetails Page', () => {
       .mockImplementationOnce(() => 
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ message: 'Event cancelled' })
+          json: () => Promise.resolve({ message: 'Event cancelled successfully' })
         })
       );
 
     renderWithProviders(<EventDetails />);
 
     await waitFor(() => {
-      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      const cancelButton = screen.getByRole('button', { name: /cancel event/i });
       fireEvent.click(cancelButton);
     });
 
@@ -179,52 +197,65 @@ describe('EventDetails Page', () => {
     });
   });
 
-  test('handles navigation to related event', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockEventData)
-      })
-    );
+  test('handles event update', async () => {
+    fetch
+      .mockImplementationOnce(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockEventData)
+        })
+      )
+      .mockImplementationOnce(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Event updated successfully' })
+        })
+      );
 
     renderWithProviders(<EventDetails />);
 
     await waitFor(() => {
-      const relatedEventLink = screen.getByText('Workshop');
-      fireEvent.click(relatedEventLink);
+      const editButton = screen.getByRole('button', { name: /edit/i });
+      fireEvent.click(editButton);
     });
 
-    // Verify that the URL has changed
-    expect(window.location.pathname).toBe('/events/2');
-  });
+    await waitFor(() => {
+      const titleInput = screen.getByLabelText(/title/i);
+      fireEvent.change(titleInput, { target: { value: 'Updated Conference' } });
 
-  test('displays event status correctly', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockEventData)
-      })
-    );
-
-    renderWithProviders(<EventDetails />);
+      const submitButton = screen.getByRole('button', { name: /save/i });
+      fireEvent.click(submitButton);
+    });
 
     await waitFor(() => {
-      expect(screen.getByText(/status: approved/i)).toBeInTheDocument();
+      expect(screen.getByText(/event updated successfully/i)).toBeInTheDocument();
     });
   });
 
-  test('displays attendee count', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockEventData)
-      })
-    );
+  test('handles attendee removal', async () => {
+    fetch
+      .mockImplementationOnce(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockEventData)
+        })
+      )
+      .mockImplementationOnce(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Attendee removed successfully' })
+        })
+      );
 
     renderWithProviders(<EventDetails />);
 
     await waitFor(() => {
-      expect(screen.getByText(/attendees: 30/i)).toBeInTheDocument();
+      const removeButton = screen.getByRole('button', { name: /remove attendee/i });
+      fireEvent.click(removeButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/attendee removed successfully/i)).toBeInTheDocument();
     });
   });
 }); 

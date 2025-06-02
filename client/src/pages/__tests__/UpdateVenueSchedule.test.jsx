@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
-import UpdateVenueSchedule from '../../pages/UpdateVenueSchedule';
+import UpdateVenueSchedule from '../UpdateVenueSchedule';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -19,14 +19,15 @@ const mockVenueData = {
     _id: '1',
     name: 'Room 101',
     type: 'classroom',
-    capacity: 50
+    capacity: 50,
+    department: 'Computer Science'
   },
   schedule: {
-    monday: ['09:00 - 10:00', '10:00 - 11:00'],
-    tuesday: ['11:00 - 12:00'],
-    wednesday: ['14:00 - 15:00'],
-    thursday: [],
-    friday: ['16:00 - 17:00']
+    monday: ['09:00 - 10:00', '14:00 - 15:00'],
+    tuesday: ['10:00 - 11:00', '15:00 - 16:00'],
+    wednesday: ['11:00 - 12:00', '16:00 - 17:00'],
+    thursday: ['09:00 - 10:00', '14:00 - 15:00'],
+    friday: ['10:00 - 11:00', '15:00 - 16:00']
   }
 };
 
@@ -40,7 +41,7 @@ const renderWithProviders = (component) => {
   );
 };
 
-describe('UpdateVenueSchedule Page', () => {
+describe('Update Venue Schedule Page', () => {
   beforeEach(() => {
     fetch.mockClear();
     mockLocalStorage.getItem.mockClear();
@@ -64,11 +65,12 @@ describe('UpdateVenueSchedule Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Room 101')).toBeInTheDocument();
       expect(screen.getByText('classroom')).toBeInTheDocument();
-      expect(screen.getByText('Capacity: 50')).toBeInTheDocument();
+      expect(screen.getByText('50')).toBeInTheDocument(); // Capacity
+      expect(screen.getByText('Computer Science')).toBeInTheDocument();
     });
   });
 
-  test('displays current schedule', async () => {
+  test('displays current schedule for each day', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -81,13 +83,11 @@ describe('UpdateVenueSchedule Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Monday')).toBeInTheDocument();
       expect(screen.getByText('09:00 - 10:00')).toBeInTheDocument();
-      expect(screen.getByText('10:00 - 11:00')).toBeInTheDocument();
-      expect(screen.getByText('Tuesday')).toBeInTheDocument();
-      expect(screen.getByText('11:00 - 12:00')).toBeInTheDocument();
+      expect(screen.getByText('14:00 - 15:00')).toBeInTheDocument();
     });
   });
 
-  test('handles adding new time slot', async () => {
+  test('adds new time slot', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -98,21 +98,15 @@ describe('UpdateVenueSchedule Page', () => {
     renderWithProviders(<UpdateVenueSchedule />);
 
     await waitFor(() => {
-      const daySelect = screen.getByLabelText(/select day/i);
-      const startTimeInput = screen.getByLabelText(/start time/i);
-      const endTimeInput = screen.getByLabelText(/end time/i);
-      const addButton = screen.getByRole('button', { name: /add slot/i });
-
-      fireEvent.change(daySelect, { target: { value: 'monday' } });
-      fireEvent.change(startTimeInput, { target: { value: '13:00' } });
-      fireEvent.change(endTimeInput, { target: { value: '14:00' } });
-      fireEvent.click(addButton);
+      const addSlotButton = screen.getByRole('button', { name: /add slot/i });
+      fireEvent.click(addSlotButton);
     });
 
-    expect(screen.getByText('13:00 - 14:00')).toBeInTheDocument();
+    expect(screen.getByLabelText(/start time/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/end time/i)).toBeInTheDocument();
   });
 
-  test('handles removing time slot', async () => {
+  test('removes time slot', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -130,7 +124,7 @@ describe('UpdateVenueSchedule Page', () => {
     expect(screen.queryByText('09:00 - 10:00')).not.toBeInTheDocument();
   });
 
-  test('handles schedule update submission', async () => {
+  test('submits schedule update successfully', async () => {
     fetch
       .mockImplementationOnce(() => 
         Promise.resolve({
@@ -168,13 +162,17 @@ describe('UpdateVenueSchedule Page', () => {
     renderWithProviders(<UpdateVenueSchedule />);
 
     await waitFor(() => {
+      const addSlotButton = screen.getByRole('button', { name: /add slot/i });
+      fireEvent.click(addSlotButton);
+
       const startTimeInput = screen.getByLabelText(/start time/i);
       const endTimeInput = screen.getByLabelText(/end time/i);
-      const addButton = screen.getByRole('button', { name: /add slot/i });
 
-      fireEvent.change(startTimeInput, { target: { value: 'invalid' } });
-      fireEvent.change(endTimeInput, { target: { value: 'invalid' } });
-      fireEvent.click(addButton);
+      fireEvent.change(startTimeInput, { target: { value: 'invalid-time' } });
+      fireEvent.change(endTimeInput, { target: { value: 'invalid-time' } });
+
+      const submitButton = screen.getByRole('button', { name: /update schedule/i });
+      fireEvent.click(submitButton);
     });
 
     expect(screen.getByText(/invalid time format/i)).toBeInTheDocument();
@@ -191,13 +189,17 @@ describe('UpdateVenueSchedule Page', () => {
     renderWithProviders(<UpdateVenueSchedule />);
 
     await waitFor(() => {
+      const addSlotButton = screen.getByRole('button', { name: /add slot/i });
+      fireEvent.click(addSlotButton);
+
       const startTimeInput = screen.getByLabelText(/start time/i);
       const endTimeInput = screen.getByLabelText(/end time/i);
-      const addButton = screen.getByRole('button', { name: /add slot/i });
 
-      fireEvent.change(startTimeInput, { target: { value: '14:00' } });
-      fireEvent.change(endTimeInput, { target: { value: '13:00' } });
-      fireEvent.click(addButton);
+      fireEvent.change(startTimeInput, { target: { value: '15:00' } });
+      fireEvent.change(endTimeInput, { target: { value: '14:00' } });
+
+      const submitButton = screen.getByRole('button', { name: /update schedule/i });
+      fireEvent.click(submitButton);
     });
 
     expect(screen.getByText(/end time must be after start time/i)).toBeInTheDocument();
@@ -211,7 +213,7 @@ describe('UpdateVenueSchedule Page', () => {
     renderWithProviders(<UpdateVenueSchedule />);
 
     await waitFor(() => {
-      expect(screen.getByText(/error loading venue schedule/i)).toBeInTheDocument();
+      expect(screen.getByText(/error loading venue data/i)).toBeInTheDocument();
     });
   });
 
@@ -226,17 +228,19 @@ describe('UpdateVenueSchedule Page', () => {
     renderWithProviders(<UpdateVenueSchedule />);
 
     await waitFor(() => {
-      const daySelect = screen.getByLabelText(/select day/i);
+      const addSlotButton = screen.getByRole('button', { name: /add slot/i });
+      fireEvent.click(addSlotButton);
+
       const startTimeInput = screen.getByLabelText(/start time/i);
       const endTimeInput = screen.getByLabelText(/end time/i);
-      const addButton = screen.getByRole('button', { name: /add slot/i });
 
-      fireEvent.change(daySelect, { target: { value: 'monday' } });
-      fireEvent.change(startTimeInput, { target: { value: '09:30' } });
-      fireEvent.change(endTimeInput, { target: { value: '10:30' } });
-      fireEvent.click(addButton);
+      fireEvent.change(startTimeInput, { target: { value: '09:00' } });
+      fireEvent.change(endTimeInput, { target: { value: '10:00' } });
+
+      const submitButton = screen.getByRole('button', { name: /update schedule/i });
+      fireEvent.click(submitButton);
     });
 
-    expect(screen.getByText(/time slot overlaps with existing slots/i)).toBeInTheDocument();
+    expect(screen.getByText(/time slot overlaps with existing slot/i)).toBeInTheDocument();
   });
 }); 

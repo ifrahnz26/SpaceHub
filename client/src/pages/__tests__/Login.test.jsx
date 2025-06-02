@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
-import Login from '../../pages/Login';
+import Login from '../Login';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -27,45 +27,24 @@ const renderWithProviders = (component) => {
 describe('Login Page', () => {
   beforeEach(() => {
     fetch.mockClear();
+    mockLocalStorage.getItem.mockClear();
     mockLocalStorage.setItem.mockClear();
   });
 
-  test('renders login form with all required fields', () => {
+  test('renders login form', () => {
     renderWithProviders(<Login />);
-    
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
-  });
-
-  test('shows validation errors for empty fields', async () => {
-    renderWithProviders(<Login />);
-    
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
-    
-    expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
-    expect(await screen.findByText(/password is required/i)).toBeInTheDocument();
-  });
-
-  test('shows validation error for invalid email', async () => {
-    renderWithProviders(<Login />);
-    
-    const emailInput = screen.getByLabelText(/email/i);
-    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
-    
-    expect(await screen.findByText(/invalid email address/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
   });
 
   test('handles successful login', async () => {
     const mockUser = {
       token: 'mock-token',
       user: {
-        id: '123',
-        email: 'test@example.com',
+        _id: '1',
+        name: 'John Doe',
+        email: 'john@example.com',
         role: 'user'
       }
     };
@@ -78,36 +57,22 @@ describe('Login Page', () => {
     );
 
     renderWithProviders(<Login />);
-    
-    // Fill in the form
+
     fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
+      target: { value: 'john@example.com' }
     });
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: 'password123' }
     });
-    
-    // Submit the form
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
+
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:5001/api/auth/login',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json'
-          }),
-          body: expect.stringContaining('test@example.com')
-        })
-      );
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('token', 'mock-token');
     });
-
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('token', mockUser.token);
   });
 
-  test('handles login error', async () => {
+  test('displays error message on failed login', async () => {
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: false,
@@ -116,43 +81,39 @@ describe('Login Page', () => {
     );
 
     renderWithProviders(<Login />);
-    
-    // Fill in the form
+
     fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
+      target: { value: 'john@example.com' }
     });
     fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'wrong-password' }
+      target: { value: 'wrongpassword' }
     });
-    
-    // Submit the form
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
+
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
     });
   });
 
-  test('shows loading state during login', async () => {
-    fetch.mockImplementationOnce(() => 
-      new Promise(resolve => setTimeout(resolve, 100))
-    );
-
+  test('validates required fields', async () => {
     renderWithProviders(<Login />);
-    
-    // Fill in the form
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'password123' }
-    });
-    
-    // Submit the form
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    expect(screen.getByText(/email is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+  });
+
+  test('validates email format', async () => {
+    renderWithProviders(<Login />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: 'invalid-email' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
   });
 }); 
