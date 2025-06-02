@@ -49,27 +49,24 @@ jobs:
         cd server
         echo "PORT=5001" > .env
         echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
-        echo "JWT_SECRET=test_secret" >> .env
+        echo "JWT_SECRET=supersecretkey123" >> .env
         echo "NODE_ENV=ci" >> .env
+
+    - name: Run server tests
+      run: |
+        cd server
+        node --experimental-vm-modules ../node_modules/jest/bin/jest.js
 
     - name: Start server in background
       run: |
         cd server
-        nohup npm start > server.log 2>&1 &
-      env:
-        PORT: 5001
-        MONGODB_URI: mongodb://localhost:27017/booking_system
-        JWT_SECRET: test_secret
-        NODE_ENV: ci
+        nohup node server.js > server.log 2>&1 &
 
     - name: Wait until server is ready
       run: |
         for i in {1..15}; do
           echo "⏳ Waiting for server (attempt $i)..."
-          if curl --fail http://localhost:5001/health; then
-            echo "✅ Server is up!"
-            exit 0
-          fi
+          curl --silent --fail http://localhost:5001/health && echo "✅ Server is up!" && exit 0
           sleep 2
         done
         echo "❌ Server did not start in time. Printing server log:"
