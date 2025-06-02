@@ -47,42 +47,4 @@ jobs:
         cd server
         npm test
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: server/package-lock.json
-    
-    - name: Install dependencies
-      run: |
-        cd server
-        npm ci
-    
-    - name: Create production .env file
-      run: |
-        cd server
-        echo "PORT=${{ secrets.PORT }}" > .env
-        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
-        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-        echo "NODE_ENV=production" >> .env
-        echo "CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}" >> .env
-    
-    - name: Build
-      run: |
-        cd server
-        npm run build
-    
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: server-build
-        path: server/dist 
+  
