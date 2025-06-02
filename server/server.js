@@ -23,65 +23,73 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 // Validate required environment variables
-if (process.env.NODE_ENV !== 'test') {
-  const requiredEnvVars = ['PORT', 'MONGO_URI', 'JWT_SECRET'];
-  const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+if (process.env.NODE_ENV !== "test") {
+  const requiredEnvVars = ["PORT", "MONGO_URI", "JWT_SECRET"];
+  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
   if (missingEnvVars.length > 0) {
-    console.error('Missing required environment variables:', missingEnvVars);
+    console.error("Missing required environment variables:", missingEnvVars);
     process.exit(1);
   }
 }
 
 const app = express();
 
-// Prometheus metrics setup
-const collectDefaultMetrics = client.collectDefaultMetrics;
-collectDefaultMetrics({ timeout: 5000 });
-const register = client.register;
-
-// Add a simple counter metric
-const httpRequestsTotal = new client.Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'path', 'status']
-});
-
-// Metrics endpoint - FIRST route to be registered
-app.get('/metrics', async (req, res) => {
-  try {
-    console.log('Metrics endpoint called');
-    // Increment the counter for this request
-    httpRequestsTotal.inc({ method: req.method, path: req.path, status: '200' });
-    
-    // Get metrics
-    const metrics = await register.metrics();
-    console.log('Metrics generated successfully');
-    
-    // Set headers
-    res.set('Content-Type', register.contentType);
-    res.set('Cache-Control', 'no-cache');
-    
-    // Send response
-    res.status(200).send(metrics);
-  } catch (error) {
-    console.error('Error generating metrics:', error);
-    // Increment the counter for the error
-    httpRequestsTotal.inc({ method: req.method, path: req.path, status: '500' });
-    res.status(500).json({ error: 'Failed to generate metrics' });
-  }
-});
-
 // Configure CORS
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 };
 app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
+
+// ✅ Prometheus metrics setup
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+const httpRequestCount = new client.Counter({
+  name: "httptotal",
+  help: "Total number of HTTP requests",
+  labelNames: ["method", "route", "status"],
+});
+
+const httpRequestDuration = new client.Histogram({
+  name: "httptime",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["method", "route", "status"],
+  buckets: [0.1, 0.3, 0.5, 1, 2, 5],
+});
+
+const memoryUsageGauge = new client.Gauge({
+  name: "nodememory",
+  help: "Memory usage in bytes",
+  labelNames: ["type"],
+});
+
+register.registerMetric(httpRequestCount);
+register.registerMetric(httpRequestDuration);
+register.registerMetric(memoryUsageGauge);
+
+// ✅ Custom middleware to track requests
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+  res.on("finish", () => {
+    httpRequestCount.labels(req.method, req.route?.path || req.path, res.statusCode.toString()).inc();
+    end({ method: req.method, route: req.route?.path || req.path, status: res.statusCode });
+  });
+  next();
+});
+
+// ✅ Track memory usage
+setInterval(() => {
+  const mem = process.memoryUsage();
+  for (const key in mem) {
+    memoryUsageGauge.labels(key).set(mem[key]);
+  }
+}, 10000);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -89,7 +97,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// API routes
+// API route definitions
 app.use("/api/auth", authRoutes);
 app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/bookings", verifyToken, bookingRoutes);
@@ -97,52 +105,57 @@ app.use("/api/resources", verifyToken, resourceRoutes);
 app.use("/api/events", verifyToken, eventRoutes);
 
 // Root test endpoint
-app.get('/', (req, res) => {
-  res.status(200).send('Server is running');
+app.get("/", (req, res) => {
+  res.status(200).send("Server is running");
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+// Health check
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
   });
 });
 
-// Error handling middleware
+// ✅ /metrics endpoint for Prometheus
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
+
+// Error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error("Error:", err);
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Something went wrong!';
+  const message = err.message || "Something went wrong!";
   res.status(statusCode).json({
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
 
-// Serve React frontend build (only if it exists)
-const buildPath = path.join(__dirname, './client/build');
+// Serve React frontend build
+const buildPath = path.join(__dirname, "./client/build");
 if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ error: 'API route not found' });
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ error: "API route not found" });
     }
-    res.sendFile(path.join(buildPath, 'index.html'));
+    res.sendFile(path.join(buildPath, "index.html"));
   });
 }
 
+// Start server
 const PORT = process.env.PORT || 5001;
-
-// MongoDB connection and server start
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log("✅ Connected to MongoDB");
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
-      console.log(`✅ Metrics available at: http://localhost:${PORT}/metrics`);
+      console.log(`✅ Prometheus metrics at: http://localhost:${PORT}/metrics`);
     });
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);
@@ -150,10 +163,11 @@ const connectDB = async () => {
   }
 };
 
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err);
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Promise Rejection:", err);
   process.exit(1);
 });
 
 connectDB();
+
 export default app;
