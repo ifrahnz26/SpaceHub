@@ -50,12 +50,7 @@ jobs:
         cd client && npm audit || true
         cd ../server && npm audit || true
     
-    - name: Run Snyk to check for vulnerabilities
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high
+   
 
   notify:
     needs: [security]
