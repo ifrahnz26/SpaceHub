@@ -26,12 +26,9 @@ export default function NewBooking() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      console.log(
-        "Resources data:",
-        data
-      ); // Use data directly here after setting state
-      setResources(data);
-       console.log("Resources state after setting:", data);
+      console.log("Resources data:", data);
+      setResources(Array.isArray(data) ? data : data.resources || []);
+      console.log("Resources state after setting:", Array.isArray(data) ? data : data.resources || []);
     } catch (err) {
       console.error("Failed to load resources", err);
       setResources([]);
@@ -50,7 +47,7 @@ export default function NewBooking() {
       try {
         const res = await fetch(
           `http://localhost:5001/api/bookings/available-slots?resourceId=${form.resourceId}&date=${form.date}`,
-           {
+          {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
@@ -152,8 +149,9 @@ export default function NewBooking() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Date</label>
+            <label htmlFor="date" className="block text-sm text-gray-600 mb-1">Date</label>
             <input
+              id="date"
               type="date"
               name="date"
               value={form.date}
@@ -164,8 +162,9 @@ export default function NewBooking() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Number of Attendees</label>
+            <label htmlFor="attendees" className="block text-sm text-gray-600 mb-1">Number of Attendees</label>
             <input
+              id="attendees"
               type="number"
               name="attendees"
               min="1"
@@ -177,8 +176,9 @@ export default function NewBooking() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm text-gray-600 mb-1">Purpose</label>
+            <label htmlFor="purpose" className="block text-sm text-gray-600 mb-1">Purpose</label>
             <textarea
+              id="purpose"
               name="purpose"
               value={form.purpose}
               onChange={handleChange}

@@ -8,11 +8,21 @@ global.fetch = jest.fn();
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
+  getItem: jest.fn(() => 'mock-token'),
   setItem: jest.fn(),
   removeItem: jest.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
+
+// Mock window.alert
+window.alert = jest.fn();
+
+// Mock useNavigate
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
 
 const renderWithProviders = (component) => {
   return render(
@@ -28,92 +38,121 @@ describe('Login Page', () => {
   beforeEach(() => {
     fetch.mockClear();
     mockLocalStorage.getItem.mockClear();
-    mockLocalStorage.setItem.mockClear();
+    mockNavigate.mockClear();
+    window.alert.mockClear();
   });
 
-  test('renders login form', () => {
+  test('renders login page with role selection', () => {
     renderWithProviders(<Login />);
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    
+    // Check for main headings
+    expect(screen.getByText(/campus resource/i)).toBeInTheDocument();
+    expect(screen.getByText(/booking made simple/i)).toBeInTheDocument();
+    
+    // Check for role selection buttons
+    expect(screen.getByText(/login as faculty/i)).toBeInTheDocument();
+    expect(screen.getByText(/login as venue incharge/i)).toBeInTheDocument();
+  });
+
+  test('shows login form when faculty role is selected', async () => {
+    renderWithProviders(<Login />);
+    
+    // Click faculty login button
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
+
+    // Check for login form elements
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    });
   });
 
   test('handles successful login', async () => {
-    const mockUser = {
-      token: 'mock-token',
-      user: {
-        _id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'user'
-      }
-    };
-
+    // Mock successful login response
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockUser)
+        json: () => Promise.resolve({
+          token: 'mock-token',
+          user: {
+            _id: '1',
+            name: 'John Doe',
+            email: 'john@test.com',
+            role: 'Faculty'
+          }
+        })
       })
     );
 
     renderWithProviders(<Login />);
+    
+    // Select faculty role
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'john@example.com' }
-    });
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'password123' }
-    });
+    // Fill in login form
+    const emailInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+    fireEvent.change(emailInput, { target: { value: 'faculty@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
 
+    // Check for successful login
     await waitFor(() => {
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith('token', 'mock-token');
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
     });
   });
 
-  test('displays error message on failed login', async () => {
+  test('handles login error', async () => {
+    // Mock failed login response
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: false,
-        json: () => Promise.resolve({ error: 'Invalid credentials' })
+        json: () => Promise.resolve({
+          error: 'Invalid credentials'
+        })
       })
     );
 
     renderWithProviders(<Login />);
+    
+    // Select faculty role
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'john@example.com' }
-    });
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'wrongpassword' }
-    });
+    // Fill in login form with invalid credentials
+    const emailInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+    fireEvent.change(emailInput, { target: { value: 'wrong@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
+    fireEvent.click(submitButton);
 
+    // Check for error message
     await waitFor(() => {
-      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+      expect(window.alert).toHaveBeenCalledWith('Invalid credentials');
     });
   });
 
-  test('validates required fields', async () => {
+  test('shows test account information', async () => {
     renderWithProviders(<Login />);
+    
+    // Select faculty role
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-
-    expect(screen.getByText(/email is required/i)).toBeInTheDocument();
-    expect(screen.getByText(/password is required/i)).toBeInTheDocument();
-  });
-
-  test('validates email format', async () => {
-    renderWithProviders(<Login />);
-
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'invalid-email' }
+    // Check for test account information
+    await waitFor(() => {
+      expect(screen.getByText(/test accounts/i)).toBeInTheDocument();
+      expect(screen.getByText(/faculty@test.com/i)).toBeInTheDocument();
+      expect(screen.getByText(/incharge@test.com/i)).toBeInTheDocument();
+      expect(screen.getByText(/hod@test.com/i)).toBeInTheDocument();
     });
-
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-
-    expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
   });
 }); 

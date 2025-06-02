@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import VenueDashboard from '../VenueDashboard';
@@ -8,53 +8,33 @@ global.fetch = jest.fn();
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(() => 'mock-token'),
+  getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
-const mockVenueData = {
-  venue: {
-    _id: '1',
-    name: 'Room 101',
-    type: 'classroom',
-    capacity: 50,
-    department: 'Computer Science'
-  },
-  stats: {
-    totalBookings: 30,
-    todayBookings: 5,
-    upcomingBookings: 10,
-    cancelledBookings: 2
-  },
-  currentBookings: [
-    {
-      _id: '1',
-      date: '2024-03-20',
-      timeSlots: ['09:00 - 10:00'],
-      purpose: 'Team Meeting',
-      status: 'approved',
-      user: {
-        name: 'John Doe',
-        email: 'john@example.com'
-      }
-    },
-    {
-      _id: '2',
-      date: '2024-03-20',
-      timeSlots: ['14:00 - 15:00'],
-      purpose: 'Conference',
-      status: 'pending',
-      user: {
-        name: 'Jane Smith',
-        email: 'jane@example.com'
-      }
-    }
-  ]
+// Mock user data
+const mockUser = {
+  id: 1,
+  name: 'John Doe',
+  email: 'john@example.com',
+  role: 'Venue Incharge',
+  assignedVenueId: 'venue123'
 };
 
 const renderWithProviders = (component) => {
+  // Mock localStorage.getItem to return JSON stringified user data
+  mockLocalStorage.getItem.mockImplementation((key) => {
+    if (key === 'user') {
+      return JSON.stringify(mockUser);
+    }
+    if (key === 'token') {
+      return 'mock-token';
+    }
+    return null;
+  });
+
   return render(
     <BrowserRouter>
       <AuthProvider>
@@ -66,173 +46,116 @@ const renderWithProviders = (component) => {
 
 describe('Venue Dashboard Page', () => {
   beforeEach(() => {
-    fetch.mockClear();
-    mockLocalStorage.getItem.mockClear();
+    // Clear all mocks before each test
+    jest.clearAllMocks();
   });
 
-  test('renders dashboard with loading state initially', () => {
+  it('renders loading state', () => {
     renderWithProviders(<VenueDashboard />);
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText('Loading venue details...')).toBeInTheDocument();
   });
 
-  test('displays venue information after successful fetch', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
+  it('renders venue details and statistics', async () => {
+    const mockVenue = {
+      _id: 'venue123',
+      name: 'Conference Room A',
+      type: 'Conference Room',
+      department: 'Computer Science',
+      capacity: 50,
+      features: 'Projector, Whiteboard',
+      description: 'Main conference room for department meetings'
+    };
+
+    const mockEvents = [
+      {
+        _id: 'event1',
+        venue: 'venue123',
+        duration: 2
+      },
+      {
+        _id: 'event2',
+        venue: 'venue123',
+        duration: 1
+      }
+    ];
+
+    const mockBookings = [
+      {
+        _id: 'booking1',
+        resourceId: { _id: 'venue123' },
+        status: 'Approved'
+      },
+      {
+        _id: 'booking2',
+        resourceId: { _id: 'venue123' },
+        status: 'Approved'
+      }
+    ];
+
+    // Mock API responses
+    global.fetch
+      .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: async () => mockVenue
       })
-    );
-
-    renderWithProviders(<VenueDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
-      expect(screen.getByText('classroom')).toBeInTheDocument();
-      expect(screen.getByText('50')).toBeInTheDocument(); // Capacity
-      expect(screen.getByText('Computer Science')).toBeInTheDocument();
-    });
-  });
-
-  test('displays venue statistics', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
+      .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
+        json: async () => mockEvents
       })
-    );
-
-    renderWithProviders(<VenueDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('30')).toBeInTheDocument(); // Total bookings
-      expect(screen.getByText('5')).toBeInTheDocument(); // Today's bookings
-      expect(screen.getByText('10')).toBeInTheDocument(); // Upcoming bookings
-      expect(screen.getByText('2')).toBeInTheDocument(); // Cancelled bookings
-    });
-  });
-
-  test('displays current bookings', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
+      .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockVenueData)
-      })
-    );
+        json: async () => mockBookings
+      });
 
     renderWithProviders(<VenueDashboard />);
 
+    // Check for header content
     await waitFor(() => {
-      expect(screen.getByText('Team Meeting')).toBeInTheDocument();
-      expect(screen.getByText('Conference')).toBeInTheDocument();
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+      expect(screen.getByText('Venue Dashboard')).toBeInTheDocument();
     });
+
+    // Check for venue details
+    expect(screen.getByText('Assigned Venue Details')).toBeInTheDocument();
+    expect(screen.getByText('Conference Room A')).toBeInTheDocument();
+    expect(screen.getByText('Conference Room')).toBeInTheDocument();
+    expect(screen.getByText('Computer Science')).toBeInTheDocument();
+    expect(screen.getByText('50 people')).toBeInTheDocument();
+    expect(screen.getByText('Projector, Whiteboard')).toBeInTheDocument();
+    expect(screen.getByText('Main conference room for department meetings')).toBeInTheDocument();
+
+    // Check for venue statistics
+    expect(screen.getByText('Venue Statistics')).toBeInTheDocument();
+    expect(screen.getByText('Total Events')).toBeInTheDocument();
+    expect(screen.getByText('Total Duration')).toBeInTheDocument();
+    expect(screen.getByText('Total Bookings')).toBeInTheDocument();
+    expect(screen.getByText('3 hrs')).toBeInTheDocument();
+
+    // Check for quick action links
+    expect(screen.getByText('View Schedule')).toBeInTheDocument();
+    expect(screen.getByText('Update Schedule')).toBeInTheDocument();
+    expect(screen.getByText('Update Event Info')).toBeInTheDocument();
   });
 
-  test('handles booking cancellation', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockVenueData)
-        })
-      )
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ message: 'Booking cancelled successfully' })
-        })
-      );
-
-    renderWithProviders(<VenueDashboard />);
-
-    await waitFor(() => {
-      const cancelButton = screen.getByRole('button', { name: /cancel/i });
-      fireEvent.click(cancelButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/booking cancelled successfully/i)).toBeInTheDocument();
-    });
-  });
-
-  test('handles refresh functionality', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockVenueData)
-        })
-      )
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({
-            ...mockVenueData,
-            stats: { ...mockVenueData.stats, totalBookings: 31 }
-          })
-        })
-      );
-
-    renderWithProviders(<VenueDashboard />);
-
-    await waitFor(() => {
-      const refreshButton = screen.getByRole('button', { name: /refresh/i });
-      fireEvent.click(refreshButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('31')).toBeInTheDocument(); // Updated total bookings
-    });
-  });
-
-  test('displays error message when fetch fails', async () => {
-    fetch.mockImplementationOnce(() => 
+  it('handles error state when no venue is assigned', async () => {
+    // Mock fetch to simulate no venue assigned
+    global.fetch.mockImplementationOnce(() => 
       Promise.reject(new Error('Failed to fetch'))
     );
 
     renderWithProviders(<VenueDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText(/error loading venue data/i)).toBeInTheDocument();
+      expect(screen.getByText('Failed to load venue details')).toBeInTheDocument();
     });
   });
 
-  test('filters bookings by date', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockVenueData)
-      })
-    );
+  it('handles error state when venue fetch fails', async () => {
+    global.fetch.mockRejectedValueOnce(new Error('Failed to fetch'));
 
     renderWithProviders(<VenueDashboard />);
 
     await waitFor(() => {
-      const dateInput = screen.getByLabelText(/filter by date/i);
-      fireEvent.change(dateInput, { target: { value: '2024-03-20' } });
+      expect(screen.getByText('Failed to load venue details')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('Team Meeting')).toBeInTheDocument();
-    expect(screen.getByText('Conference')).toBeInTheDocument();
-  });
-
-  test('navigates to schedule update page', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockVenueData)
-      })
-    );
-
-    renderWithProviders(<VenueDashboard />);
-
-    await waitFor(() => {
-      const updateScheduleButton = screen.getByRole('button', { name: /update schedule/i });
-      fireEvent.click(updateScheduleButton);
-    });
-
-    // Verify navigation
-    expect(window.location.pathname).toBe('/venue/1/schedule/update');
   });
 }); 

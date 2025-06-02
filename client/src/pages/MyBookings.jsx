@@ -3,10 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBookings = async () => {
+      setLoading(true);
+      setError(null);
       const token = localStorage.getItem("token");
       try {
         const res = await fetch("http://localhost:5001/api/bookings/my", {
@@ -18,15 +22,34 @@ export default function MyBookings() {
         if (res.ok) {
           setBookings(data);
         } else {
-          console.error("Failed to fetch bookings");
+          setError(data.error || "Failed to fetch bookings");
         }
       } catch (err) {
+        setError("Error loading bookings");
         console.error("Error:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchBookings();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 bg-red-50 rounded-lg border border-red-200">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

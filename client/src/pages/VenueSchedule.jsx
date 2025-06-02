@@ -51,9 +51,9 @@ export default function VenueSchedule() {
         });
         const data = await res.json();
         if (res.ok) {
-          setVenues(data);
-          if (data.length > 0) {
-            setSelectedVenueId(data[0]._id);
+          setVenues(Array.isArray(data) ? data : data.resources || []);
+          if ((Array.isArray(data) ? data : data.resources || []).length > 0) {
+            setSelectedVenueId((Array.isArray(data) ? data : data.resources || [])[0]._id);
           }
         }
       } catch (err) {

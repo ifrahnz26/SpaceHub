@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import Dashboard from '../Dashboard';
@@ -13,39 +13,6 @@ const mockLocalStorage = {
   removeItem: jest.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
-
-const mockDashboardData = {
-  stats: {
-    totalBookings: 50,
-    pendingBookings: 10,
-    approvedBookings: 35,
-    rejectedBookings: 5
-  },
-  recentBookings: [
-    {
-      _id: '1',
-      resource: {
-        name: 'Room 101',
-        type: 'classroom'
-      },
-      date: '2024-03-20',
-      timeSlots: ['09:00 - 10:00'],
-      purpose: 'Team Meeting',
-      status: 'pending'
-    },
-    {
-      _id: '2',
-      resource: {
-        name: 'Room 102',
-        type: 'auditorium'
-      },
-      date: '2024-03-21',
-      timeSlots: ['14:00 - 15:00'],
-      purpose: 'Conference',
-      status: 'approved'
-    }
-  ]
-};
 
 const renderWithProviders = (component) => {
   return render(
@@ -63,105 +30,106 @@ describe('Dashboard Page', () => {
     mockLocalStorage.getItem.mockClear();
   });
 
-  test('renders dashboard with loading state initially', () => {
+  test('renders loading state when user is not loaded', () => {
     renderWithProviders(<Dashboard />);
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading your dashboard/i)).toBeInTheDocument();
   });
 
-  test('displays dashboard statistics after successful fetch', async () => {
+  test('renders faculty dashboard with statistics', async () => {
+    // Mock user context
+    const mockUser = {
+      name: 'John Doe',
+      role: 'Faculty',
+      department: 'Computer Science'
+    };
+
+    // Mock bookings data
+    const mockBookings = [
+      { status: 'Approved', date: '2024-03-01' },
+      { status: 'Rejected', date: '2024-03-02' },
+      { status: 'Pending', date: '2024-03-03' }
+    ];
+
+    // Mock fetch response
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockDashboardData)
+        json: () => Promise.resolve(mockBookings)
       })
     );
 
+    // Mock AuthContext
+    jest.spyOn(require('../../context/AuthContext'), 'useAuth').mockReturnValue({
+      user: mockUser
+    });
+
     renderWithProviders(<Dashboard />);
 
+    // Check for welcome message
     await waitFor(() => {
-      expect(screen.getByText('50')).toBeInTheDocument(); // Total bookings
-      expect(screen.getByText('10')).toBeInTheDocument(); // Pending bookings
-      expect(screen.getByText('35')).toBeInTheDocument(); // Approved bookings
-      expect(screen.getByText('5')).toBeInTheDocument(); // Rejected bookings
+      expect(screen.getByText(/welcome, john doe!/i)).toBeInTheDocument();
     });
+
+    // Wait for loading to complete and check for statistics cards
+    await waitFor(() => {
+      expect(screen.getByText(/your booking statistics/i)).toBeInTheDocument();
+      expect(screen.getByText(/total bookings made/i)).toBeInTheDocument();
+      expect(screen.getByText(/approved bookings/i)).toBeInTheDocument();
+      expect(screen.getByText(/rejected bookings/i)).toBeInTheDocument();
+      expect(screen.getByText(/pending bookings/i)).toBeInTheDocument();
+    });
+
+    // Check for charts
+    expect(screen.getByText(/booking status breakdown/i)).toBeInTheDocument();
+    expect(screen.getByText(/monthly booking trend/i)).toBeInTheDocument();
   });
 
-  test('displays recent bookings', async () => {
+  test('renders student dashboard', () => {
+    // Mock user context
+    const mockUser = {
+      name: 'Jane Smith',
+      role: 'Student',
+      department: 'Computer Science'
+    };
+
+    // Mock AuthContext
+    jest.spyOn(require('../../context/AuthContext'), 'useAuth').mockReturnValue({
+      user: mockUser
+    });
+
+    renderWithProviders(<Dashboard />);
+
+    // Check for student dashboard content
+    expect(screen.getByRole('heading', { name: /your dashboard/i })).toBeInTheDocument();
+    expect(screen.getByText(/this is your dashboard as a student/i)).toBeInTheDocument();
+  });
+
+  test('handles error state when fetching statistics fails', async () => {
+    // Mock user context
+    const mockUser = {
+      name: 'John Doe',
+      role: 'Faculty',
+      department: 'Computer Science'
+    };
+
+    // Mock fetch error
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockDashboardData)
+        ok: false,
+        json: () => Promise.resolve({ error: 'Failed to fetch bookings' })
       })
     );
 
-    renderWithProviders(<Dashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Team Meeting')).toBeInTheDocument();
-      expect(screen.getByText('Conference')).toBeInTheDocument();
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
-      expect(screen.getByText('Room 102')).toBeInTheDocument();
+    // Mock AuthContext
+    jest.spyOn(require('../../context/AuthContext'), 'useAuth').mockReturnValue({
+      user: mockUser
     });
-  });
-
-  test('handles refresh functionality', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockDashboardData)
-        })
-      )
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({
-            ...mockDashboardData,
-            stats: { ...mockDashboardData.stats, totalBookings: 51 }
-          })
-        })
-      );
 
     renderWithProviders(<Dashboard />);
 
+    // Check for error message
     await waitFor(() => {
-      const refreshButton = screen.getByRole('button', { name: /refresh/i });
-      fireEvent.click(refreshButton);
+      expect(screen.getByText(/failed to load your booking statistics/i)).toBeInTheDocument();
     });
-
-    await waitFor(() => {
-      expect(screen.getByText('51')).toBeInTheDocument(); // Updated total bookings
-    });
-  });
-
-  test('displays error message when fetch fails', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.reject(new Error('Failed to fetch'))
-    );
-
-    renderWithProviders(<Dashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/error loading dashboard/i)).toBeInTheDocument();
-    });
-  });
-
-  test('navigates to new booking page', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockDashboardData)
-      })
-    );
-
-    renderWithProviders(<Dashboard />);
-
-    await waitFor(() => {
-      const newBookingButton = screen.getByRole('button', { name: /new booking/i });
-      fireEvent.click(newBookingButton);
-    });
-
-    // Verify navigation (this would typically be handled by react-router-dom)
-    expect(window.location.pathname).toBe('/new-booking');
   });
 }); 

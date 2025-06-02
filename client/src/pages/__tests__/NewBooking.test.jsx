@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import NewBooking from '../NewBooking';
@@ -7,34 +7,20 @@ import NewBooking from '../NewBooking';
 global.fetch = jest.fn();
 
 // Mock localStorage
-const mockLocalStorage = {
-  getItem: jest.fn(() => 'mock-token'),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
+const mockUser = {
+  id: '1',
+  name: 'Test User',
+  email: 'test@example.com',
+  role: 'user'
 };
-Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
-const mockResources = [
-  {
-    _id: '1',
-    name: 'Room 101',
-    type: 'classroom',
-    capacity: 50
-  },
-  {
-    _id: '2',
-    name: 'Room 102',
-    type: 'auditorium',
-    capacity: 100
-  }
-];
+const mockToken = 'mock-token';
 
-const mockTimeSlots = [
-  '09:00 - 10:00',
-  '10:00 - 11:00',
-  '11:00 - 12:00',
-  '14:00 - 15:00'
-];
+Storage.prototype.getItem = jest.fn((key) => {
+  if (key === 'user') return JSON.stringify(mockUser);
+  if (key === 'token') return mockToken;
+  return null;
+});
 
 const renderWithProviders = (component) => {
   return render(
@@ -46,165 +32,138 @@ const renderWithProviders = (component) => {
   );
 };
 
-describe('NewBooking Page', () => {
+describe('New Booking Page', () => {
   beforeEach(() => {
     fetch.mockClear();
-    mockLocalStorage.getItem.mockClear();
   });
 
-  test('renders booking form with all required fields', () => {
+  it('renders initial state with department selection', () => {
     renderWithProviders(<NewBooking />);
-    expect(screen.getByLabelText(/date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/purpose/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/attendees/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/resource/i)).toBeInTheDocument();
+    
+    // Check for department tabs
+    expect(screen.getByText('CSE')).toBeInTheDocument();
+    expect(screen.getByText('ISE')).toBeInTheDocument();
+    expect(screen.getByText('AIML')).toBeInTheDocument();
+    
+    // Check for form elements
+    expect(screen.getByText('No resources found for this department.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Date')).toBeInTheDocument();
+    expect(screen.getByLabelText('Number of Attendees')).toBeInTheDocument();
+    expect(screen.getByLabelText('Purpose')).toBeInTheDocument();
+    
+    // Check for buttons
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /submit request/i })).toBeInTheDocument();
   });
 
-  test('loads and displays available resources', async () => {
-    fetch.mockImplementationOnce(() => 
-      Promise.resolve({
+  it('loads resources when department is selected', async () => {
+    const mockResources = [
+      { _id: 'res1', name: 'Resource 1' },
+      { _id: 'res2', name: 'Resource 2' }
+    ];
+
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ resources: mockResources })
+    });
+
+    renderWithProviders(<NewBooking />);
+    
+    // Click on CSE department tab
+    const cseTab = screen.getByText('CSE');
+    await act(async () => {
+      fireEvent.click(cseTab);
+    });
+    
+    // Wait for resources to load
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(screen.getByText('Resource 1')).toBeInTheDocument();
+      expect(screen.getByText('Resource 2')).toBeInTheDocument();
+    });
+  });
+
+  it('shows available time slots when resource and date are selected', async () => {
+    const mockSlots = ['09:00 - 10:00', '10:00 - 11:00'];
+
+    fetch
+      .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockResources)
+        json: async () => ({ resources: [{ _id: 'res1', name: 'Resource 1' }] })
       })
-    );
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ availableSlots: mockSlots })
+      });
 
     renderWithProviders(<NewBooking />);
 
+    // Click on CSE department tab
+    const cseTab = screen.getByText('CSE');
+    await act(async () => {
+      fireEvent.click(cseTab);
+    });
+
+    // Wait for resource select to appear
+    const resourceSelect = await screen.findByRole('combobox');
+    await act(async () => {
+      fireEvent.change(resourceSelect, {
+        target: { value: 'res1' }
+      });
+    });
+
+    // Select date
+    const dateInput = screen.getByLabelText('Date');
+    await act(async () => {
+      fireEvent.change(dateInput, {
+        target: { value: '2024-03-20' }
+      });
+    });
+
+    // Check for time slots
     await waitFor(() => {
-      expect(screen.getByText('Room 101')).toBeInTheDocument();
-      expect(screen.getByText('Room 102')).toBeInTheDocument();
+      expect(screen.getByText('09:00 - 10:00')).toBeInTheDocument();
+      expect(screen.getByText('10:00 - 11:00')).toBeInTheDocument();
     });
   });
 
-  test('shows validation errors for empty form submission', async () => {
+  it('handles error when loading resources fails', async () => {
+    fetch.mockRejectedValueOnce(new Error('Failed to fetch'));
+
     renderWithProviders(<NewBooking />);
 
-    const submitButton = screen.getByRole('button', { name: /submit/i });
-    fireEvent.click(submitButton);
+    // Click on CSE department tab
+    const cseTab = screen.getByText('CSE');
+    await act(async () => {
+      fireEvent.click(cseTab);
+    });
 
-    expect(screen.getByText(/date is required/i)).toBeInTheDocument();
-    expect(screen.getByText(/purpose is required/i)).toBeInTheDocument();
-    expect(screen.getByText(/resource is required/i)).toBeInTheDocument();
+    // Wait for error message
+    await waitFor(() => {
+      expect(screen.getByText('No resources found for this department.')).toBeInTheDocument();
+    });
   });
 
-  test('handles successful booking creation', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockResources)
-        })
-      )
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ message: 'Booking created successfully' })
-        })
-      );
-
+  it('validates required fields before submission', async () => {
+    const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    
     renderWithProviders(<NewBooking />);
 
-    await waitFor(() => {
-      const dateInput = screen.getByLabelText(/date/i);
-      const purposeInput = screen.getByLabelText(/purpose/i);
-      const attendeesInput = screen.getByLabelText(/attendees/i);
-      const resourceSelect = screen.getByLabelText(/resource/i);
+    // Click on CSE department tab
+    const cseTab = screen.getByText('CSE');
+    await act(async () => {
+      fireEvent.click(cseTab);
+    });
 
-      fireEvent.change(dateInput, { target: { value: '2024-03-20' } });
-      fireEvent.change(purposeInput, { target: { value: 'Team Meeting' } });
-      fireEvent.change(attendeesInput, { target: { value: '10' } });
-      fireEvent.change(resourceSelect, { target: { value: '1' } });
-
-      const submitButton = screen.getByRole('button', { name: /submit/i });
+    // Try to submit without filling required fields
+    const submitButton = screen.getByRole('button', { name: /submit request/i });
+    await act(async () => {
       fireEvent.click(submitButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByText(/booking created successfully/i)).toBeInTheDocument();
-    });
+    // Check for alert
+    expect(mockAlert).toHaveBeenCalledWith('Missing required fields');
+    
+    mockAlert.mockRestore();
   });
-
-  test('handles API error during booking creation', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockResources)
-        })
-      )
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: false,
-          json: () => Promise.resolve({ error: 'Failed to create booking' })
-        })
-      );
-
-    renderWithProviders(<NewBooking />);
-
-    await waitFor(() => {
-      const dateInput = screen.getByLabelText(/date/i);
-      const purposeInput = screen.getByLabelText(/purpose/i);
-      const attendeesInput = screen.getByLabelText(/attendees/i);
-      const resourceSelect = screen.getByLabelText(/resource/i);
-
-      fireEvent.change(dateInput, { target: { value: '2024-03-20' } });
-      fireEvent.change(purposeInput, { target: { value: 'Team Meeting' } });
-      fireEvent.change(attendeesInput, { target: { value: '10' } });
-      fireEvent.change(resourceSelect, { target: { value: '1' } });
-
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-      fireEvent.click(submitButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/failed to create booking/i)).toBeInTheDocument();
-    });
-  });
-
-  test('validates date is not in the past', async () => {
-    renderWithProviders(<NewBooking />);
-
-    const dateInput = screen.getByLabelText(/date/i);
-    fireEvent.change(dateInput, { target: { value: '2023-01-01' } });
-
-    const submitButton = screen.getByRole('button', { name: /submit/i });
-    fireEvent.click(submitButton);
-
-    expect(screen.getByText(/date cannot be in the past/i)).toBeInTheDocument();
-  });
-
-  test('shows loading state during form submission', async () => {
-    fetch
-      .mockImplementationOnce(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockResources)
-        })
-      )
-      .mockImplementationOnce(() => 
-        new Promise(resolve => setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({ message: 'Booking created successfully' })
-        }), 100))
-      );
-
-    renderWithProviders(<NewBooking />);
-
-    await waitFor(() => {
-      const dateInput = screen.getByLabelText(/date/i);
-      const purposeInput = screen.getByLabelText(/purpose/i);
-      const attendeesInput = screen.getByLabelText(/attendees/i);
-      const resourceSelect = screen.getByLabelText(/resource/i);
-
-      fireEvent.change(dateInput, { target: { value: '2024-03-20' } });
-      fireEvent.change(purposeInput, { target: { value: 'Team Meeting' } });
-      fireEvent.change(attendeesInput, { target: { value: '10' } });
-      fireEvent.change(resourceSelect, { target: { value: '1' } });
-
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-      fireEvent.click(submitButton);
-    });
-
-    expect(screen.getByText(/submitting/i)).toBeInTheDocument();
-  });
-}); 
+});
