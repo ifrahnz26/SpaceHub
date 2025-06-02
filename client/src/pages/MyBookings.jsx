@@ -7,33 +7,60 @@ export default function MyBookings() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      setError(null);
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch("http://localhost:5001/api/bookings/my", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setBookings(data);
-        } else {
-          setError(data.error || "Failed to fetch bookings");
-        }
-      } catch (err) {
-        setError("Error loading bookings");
-        console.error("Error:", err);
-      } finally {
-        setLoading(false);
+  const fetchBookings = async () => {
+    setLoading(true);
+    setError(null);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("http://localhost:5001/api/bookings/my", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBookings(data);
+      } else {
+        setError(data.error || "Failed to fetch bookings");
       }
-    };
+    } catch (err) {
+      setError("Error loading bookings");
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBookings();
   }, []);
+
+  const handleDelete = async (bookingId) => {
+    if (!window.confirm("Are you sure you want to delete this booking?")) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`http://localhost:5001/api/bookings/${bookingId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Refresh the bookings list
+        fetchBookings();
+      } else {
+        setError(data.error || "Failed to delete booking");
+      }
+    } catch (err) {
+      setError("Error deleting booking");
+      console.error("Error:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -62,7 +89,7 @@ export default function MyBookings() {
             className="bg-accent text-white px-4 py-2 rounded hover:bg-pink-700"
             onClick={() => navigate("/new-booking")}
           >
-            add New Booking
+            Add New Booking
           </button>
         </div>
 
@@ -79,6 +106,7 @@ export default function MyBookings() {
                 <th className="p-2">Resource</th>
                 <th className="p-2">Purpose</th>
                 <th className="p-2">Status</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +130,14 @@ export default function MyBookings() {
                     >
                       {booking.status}
                     </span>
+                  </td>
+                  <td className="p-2">
+                    <button
+                      onClick={() => handleDelete(booking._id)}
+                      className="text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
