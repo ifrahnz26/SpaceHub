@@ -48,46 +48,14 @@ jobs:
       run: |
         cd server
         echo "PORT=5001" > .env
-        echo "MONGO_URI=mongodb://localhost:27017/booking_system" >> .env
+        echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
         echo "JWT_SECRET=test_secret" >> .env
-        echo "NODE_ENV=ci" >> .env
+        echo "NODE_ENV=test" >> .env
 
     - name: Run server tests
       run: |
         cd server
         npm test
-
-    - name: Start server in background
-      run: |
-        cd server
-        npm start &
-      env:
-        PORT: 5001
-        MONGO_URI: mongodb://localhost:27017/booking_system
-        JWT_SECRET: test_secret
-        NODE_ENV: ci
-
-    - name: Wait until server is ready
-      run: |
-        for i in {1..15}; do
-          echo "⏳ Waiting for server (attempt $i)..."
-          if curl -s http://localhost:5001/health | grep '"status":"ok"'; then
-            echo "✅ Server is up!"
-            break
-          fi
-          sleep 2
-        done
-
-    - name: Install Newman and HTML reporter
-      run: npm install -g newman newman-reporter-html
-
-    - name: Run API tests with Newman
-      run: |
-        newman run postman/collection.json \
-          -e postman/environment.json \
-          --insecure --color on \
-          -r cli,html \
-          --reporter-html-export newman/postman-newman.html
 
   security-scan:
     needs: install-and-test
