@@ -1,0 +1,95 @@
+name: Full CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install root dependencies
+      run: npm ci
+
+    - name: Install client dependencies
+      run: |
+        cd client
+        npm ci
+
+    - name: Run client tests
+      run: |
+        cd client
+        npm test -- --watchAll=false
+
+    - name: Install server dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Create .env for server
+      run: |
+        cd server
+        echo "PORT=5001" > .env
+        echo "MONGODB_URI=mongodb://localhost:27017/booking_system" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
+        echo "NODE_ENV=test" >> .env
+
+    - name: Run server tests
+      run: |
+        cd server
+        npm test
+
+  security-scan:
+    needs: install-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run npm audit
+      run: |
+        npm audit || true
+        cd client && npm audit || true
+        cd ../server && npm audit || true
+
+  docker-build-push:
+    needs: security-scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build and tag client image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest ./client
+
+    - name: Build and tag server image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest ./server
+
+    - name: Push client image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
+
+    - name: Push server image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
