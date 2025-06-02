@@ -78,14 +78,16 @@ jobs:
           sleep 2
         done
 
-    - name: Install Newman
-      run: npm install -g newman
+    - name: Install Newman and HTML reporter
+      run: npm install -g newman newman-reporter-html
 
     - name: Run API tests with Newman
       run: |
-        newman run ./postman/collection.json \
-          -e ./postman/environment.json \
-          --insecure --color on
+        newman run postman/collection.json \
+          -e postman/environment.json \
+          --insecure --color on \
+          -r cli,html \
+          --reporter-html-export newman/postman-newman.html
 
   security-scan:
     needs: install-and-test
