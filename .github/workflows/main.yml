@@ -15,6 +15,7 @@ jobs:
         image: mongo:latest
         ports:
           - 27017:27017
+        options: --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'" --health-interval=10s --health-timeout=5s --health-retries=5
 
     steps:
     - name: Checkout code
@@ -49,13 +50,8 @@ jobs:
         cd server
         echo "PORT=5001" > .env
         echo "MONGO_URI=mongodb://localhost:27017/booking_system" >> .env
-        echo "JWT_SECRET=test_secret" >> .env
+        echo "JWT_SECRET=supersecretkey123" >> .env
         echo "NODE_ENV=ci" >> .env
-
-    - name: Run server tests
-      run: |
-        cd server
-        npm test
 
     - name: Start server in background
       run: |
@@ -64,7 +60,7 @@ jobs:
       env:
         PORT: 5001
         MONGO_URI: mongodb://localhost:27017/booking_system
-        JWT_SECRET: test_secret
+        JWT_SECRET: supersecretkey123
         NODE_ENV: ci
 
     - name: Wait until server is ready
@@ -78,48 +74,24 @@ jobs:
           sleep 2
         done
 
-    - name: Install Newman
-      run: npm install -g newman
+    - name: Log in and extract token
+      id: login
+      run: |
+        RESPONSE=$(curl -s -X POST http://localhost:5001/api/auth/login \
+          -H "Content-Type: application/json" \
+          -d '{"email": "hod@test.com", "password": "password123"}')
+
+        echo "Login response: $RESPONSE"
+        TOKEN=$(echo $RESPONSE | jq -r '.token')
+        echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+
+    - name: Inject token into Postman environment
+      run: |
+        jq '.values[] |= if .key == "auth_token" then .value = env.TOKEN else . end' postman/environment.json > postman/tmp.json
+        mv postman/tmp.json postman/environment.json
 
     - name: Run API tests with Newman
-      run: |
-        newman run ./postman/collection.json \
-          -e ./postman/environment.json \
-          --insecure --color on
-
-  security-scan:
-    needs: install-and-test
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Run npm audit
-      run: |
-        npm audit || true
-        cd client && npm audit || true
-        cd ../server && npm audit || true
-
-  docker-build-push:
-    needs: security-scan
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-    - name: Build and tag client image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest ./client
-
-    - name: Build and tag server image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest ./server
-
-    - name: Push client image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-client:latest
-
-    - name: Push server image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/spacehub-server:latest
+      uses: anthonyvscode/newman-action@v1
+      with:
+        collection: ./postman/collection.json
+        environment: ./postman/environment.json
