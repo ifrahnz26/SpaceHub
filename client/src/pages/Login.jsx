@@ -299,7 +299,7 @@ export default function Login() {
           <div>
             <h4 className="font-bold mb-2">Quick Links</h4>
             <ul className="space-y-1">
-              <li><a href="#">Home</a></li>
+              <li><a href="/">Home</a></li>
               <li><a href="#about">About</a></li>
               <li><a href="#resources">Resources</a></li>
               <li><a href="#contact">Contact</a></li>

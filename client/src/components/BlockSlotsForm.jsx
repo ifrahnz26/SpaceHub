@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
 
 export default function BlockSlotsForm({ resources, onBlock }) {
   const [date, setDate] = useState("");

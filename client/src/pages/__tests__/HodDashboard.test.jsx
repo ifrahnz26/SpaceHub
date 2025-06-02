@@ -217,7 +217,7 @@ describe('HOD Dashboard Page', () => {
     fireEvent.click(pendingButton);
 
     // Check if only pending bookings are shown
-    expect(screen.getByText('Room 101')).toBeInTheDocument();
+    await screen.findByText('Room 101');
     expect(screen.queryByText('Room 102')).not.toBeInTheDocument();
 
     // Click Approved filter
@@ -226,6 +226,6 @@ describe('HOD Dashboard Page', () => {
 
     // Check if only approved bookings are shown
     expect(screen.queryByText('Room 101')).not.toBeInTheDocument();
-    expect(screen.getByText('Room 102')).toBeInTheDocument();
+    await screen.findByText('Room 102');
   });
 }); 
