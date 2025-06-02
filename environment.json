@@ -1,0 +1,20 @@
+{
+	"id": "bc763847-ffa6-4f87-97ec-0d74bb3bca7a",
+	"name": "UniversityLabEnv",
+	"values": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5001",
+			"enabled": true
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2025-06-02T14:02:36.462Z",
+	"_postman_exported_using": "Postman/11.46.5"
+}
