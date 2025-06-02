@@ -5,7 +5,6 @@ import BlockSlotsForm from "../components/BlockSlotsForm";
 export default function UpdateVenueSchedule() {
   const [assignedResource, setAssignedResource] = useState(null);
   const [bookings, setBookings] = useState([]);
-  const [resources, setResources] = useState([]);
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const token = localStorage.getItem("token");
@@ -24,7 +23,6 @@ export default function UpdateVenueSchedule() {
       const data = await res.json();
       
       if (res.ok) {
-        setResources([data]); // Store as array since BlockSlotsForm expects array
         setAssignedResource(data);
         setError(null);
       } else {

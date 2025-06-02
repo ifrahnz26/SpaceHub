@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import NewBooking from '../NewBooking';
@@ -71,7 +71,7 @@ describe('New Booking Page', () => {
     
     // Click on CSE department tab
     const cseTab = screen.getByText('CSE');
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.click(cseTab);
     });
     
@@ -100,13 +100,13 @@ describe('New Booking Page', () => {
 
     // Click on CSE department tab
     const cseTab = screen.getByText('CSE');
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.click(cseTab);
     });
 
     // Wait for resource select to appear
     const resourceSelect = await screen.findByRole('combobox');
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.change(resourceSelect, {
         target: { value: 'res1' }
       });
@@ -114,7 +114,7 @@ describe('New Booking Page', () => {
 
     // Select date
     const dateInput = screen.getByLabelText('Date');
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.change(dateInput, {
         target: { value: '2024-03-20' }
       });
@@ -134,7 +134,7 @@ describe('New Booking Page', () => {
 
     // Click on CSE department tab
     const cseTab = screen.getByText('CSE');
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.click(cseTab);
     });
 
@@ -151,13 +151,13 @@ describe('New Booking Page', () => {
 
     // Click on CSE department tab
     const cseTab = screen.getByText('CSE');
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.click(cseTab);
     });
 
     // Try to submit without filling required fields
     const submitButton = screen.getByRole('button', { name: /submit request/i });
-    await act(async () => {
+    await waitFor(() => {
       fireEvent.click(submitButton);
     });
 

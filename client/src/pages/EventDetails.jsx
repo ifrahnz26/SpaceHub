@@ -6,7 +6,6 @@ export default function EventDetails() {
   const [venues, setVenues] = useState([]);
   const [selectedVenue, setSelectedVenue] = useState("");
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
   const token = localStorage.getItem("token");
 
   // Fetch all venues
