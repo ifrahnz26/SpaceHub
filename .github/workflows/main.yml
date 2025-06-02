@@ -49,35 +49,43 @@ jobs:
         cd server
         echo "PORT=5001" > .env
         echo "MONGO_URI=mongodb://localhost:27017/booking_system" >> .env
-        echo "JWT_SECRET=supersecretkey123" >> .env
+        echo "JWT_SECRET=test_secret" >> .env
         echo "NODE_ENV=ci" >> .env
 
     - name: Run server tests
       run: |
         cd server
-        node --experimental-vm-modules ../node_modules/jest/bin/jest.js
+        npm test
 
     - name: Start server in background
       run: |
         cd server
-        nohup node server.js > server.log 2>&1 &
+        npm start &
+      env:
+        PORT: 5001
+        MONGO_URI: mongodb://localhost:27017/booking_system
+        JWT_SECRET: test_secret
+        NODE_ENV: ci
 
     - name: Wait until server is ready
       run: |
         for i in {1..15}; do
           echo "⏳ Waiting for server (attempt $i)..."
-          curl --silent --fail http://localhost:5001/health && echo "✅ Server is up!" && exit 0
+          if curl -s http://localhost:5001/health | grep '"status":"ok"'; then
+            echo "✅ Server is up!"
+            break
+          fi
           sleep 2
         done
-        echo "❌ Server did not start in time. Printing server log:"
-        cat server/server.log
-        exit 1
+
+    - name: Install Newman
+      run: npm install -g newman
 
     - name: Run API tests with Newman
-      uses: anthonyvscode/newman-action@v1
-      with:
-        collection: ./postman/collection.json
-        environment: ./postman/environment.json
+      run: |
+        newman run ./postman/collection.json \
+          -e ./postman/environment.json \
+          --insecure --color on
 
   security-scan:
     needs: install-and-test
