@@ -50,7 +50,82 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"hod@test.com\",\n  \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "http://localhost:3000"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "351"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"15f-UEu0qnP2DkcbgsU9aCZRdY3kSKY\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 02 Jun 2025 19:31:31 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4M2RmMjk5NDZhZjU1YWVkYjA0NTc2MiIsInJvbGUiOiJIT0QiLCJkZXBhcnRtZW50IjoiQ1NFIiwiaWF0IjoxNzQ4ODkyNjkxLCJleHAiOjE3NDg5NzkwOTF9.DEKNC8dzKO41HZ3ngngfG-u3o5jpnDv2HMwTzvOqSps\",\n    \"user\": {\n        \"id\": \"683df29946af55aedb045762\",\n        \"name\": \"Prof. Michael Wilson\",\n        \"email\": \"hod@test.com\",\n        \"role\": \"HOD\",\n        \"department\": \"CSE\"\n    }\n}"
+						}
+					]
 				}
 			]
 		},
