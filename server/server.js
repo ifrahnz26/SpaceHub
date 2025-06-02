@@ -5,6 +5,7 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import client from "prom-client"; // ✅ Prometheus client
 
 // Import route handlers
 import authRoutes from "./routes/auth.js";
@@ -45,13 +46,27 @@ app.use(cors(corsOptions));
 // Middleware
 app.use(express.json());
 
+// Prometheus metrics setup
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+const register = client.register;
+
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
+});
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
-// API route definitions
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/bookings", verifyToken, bookingRoutes);
@@ -87,8 +102,6 @@ app.use((err, req, res, next) => {
 const buildPath = path.join(__dirname, './client/build');
 if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
-
-  // ✅ PLACE THIS AT THE VERY END!
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
       return res.status(404).json({ error: 'API route not found' });
@@ -97,7 +110,6 @@ if (fs.existsSync(buildPath)) {
   });
 }
 
-// Server port
 const PORT = process.env.PORT || 5001;
 
 // MongoDB connection and server start
@@ -107,7 +119,7 @@ const connectDB = async () => {
     console.log('✅ Connected to MongoDB');
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
-      console.log(`✅ Health check available at: http://localhost:${PORT}/health`);
+      console.log(`✅ Metrics available at: http://localhost:${PORT}/metrics`);
     });
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);
@@ -115,15 +127,10 @@ const connectDB = async () => {
   }
 };
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
   process.exit(1);
 });
 
-// Start the server only if not in test mode
-//if (process.env.NODE_ENV !== 'test') {
-  connectDB();
-//}
-
+connectDB();
 export default app;
