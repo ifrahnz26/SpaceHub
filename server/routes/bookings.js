@@ -421,13 +421,22 @@ router.put("/:id", verifyToken, async (req, res) => {
 // Delete booking
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
-    const booking = await Booking.findByIdAndDelete(req.params.id);
+    const booking = await Booking.findById(req.params.id);
+    
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
     }
+
+    // Only allow deletion if user is the creator of the booking
+    if (booking.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "You can only delete your own bookings" });
+    }
+
+    await Booking.findByIdAndDelete(req.params.id);
     res.json({ message: "Booking deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Delete booking error:", err);
+    res.status(500).json({ error: "Failed to delete booking" });
   }
 });
 
