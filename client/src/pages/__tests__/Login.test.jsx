@@ -45,8 +45,11 @@ describe('Login Page', () => {
   test('renders login page with role selection', () => {
     renderWithProviders(<Login />);
     
+    // Check for main headings
     expect(screen.getByText(/campus resource/i)).toBeInTheDocument();
     expect(screen.getByText(/booking made simple/i)).toBeInTheDocument();
+    
+    // Check for role selection buttons
     expect(screen.getByText(/login as faculty/i)).toBeInTheDocument();
     expect(screen.getByText(/login as venue incharge/i)).toBeInTheDocument();
   });
@@ -54,14 +57,18 @@ describe('Login Page', () => {
   test('shows login form when faculty role is selected', async () => {
     renderWithProviders(<Login />);
     
-    fireEvent.click(screen.getByText(/login as faculty/i));
+    // Click faculty login button
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    expect(await screen.findByPlaceholderText(/email/i)).toBeInTheDocument();
-    expect(await screen.findByPlaceholderText(/password/i)).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    // Check for login form elements
+    await screen.findByPlaceholderText(/email/i);
+    await screen.findByPlaceholderText(/password/i);
+    await screen.findByRole('button', { name: /sign in/i });
   });
 
   test('handles successful login', async () => {
+    // Mock successful login response
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: true,
@@ -79,17 +86,28 @@ describe('Login Page', () => {
 
     renderWithProviders(<Login />);
     
-    fireEvent.click(screen.getByText(/login as faculty/i));
+    // Select faculty role
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'faculty@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    // Fill in login form
+    const emailInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-    await waitFor(() => expect(mockLocalStorage.setItem).toHaveBeenCalledWith('token', 'mock-token'));
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboard'));
+    fireEvent.change(emailInput, { target: { value: 'faculty@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
+
+    // Check for successful login
+    await waitFor(() => {
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('token', 'mock-token');
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    });
   });
 
   test('handles login error', async () => {
+    // Mock failed login response
     fetch.mockImplementationOnce(() => 
       Promise.resolve({
         ok: false,
@@ -101,23 +119,38 @@ describe('Login Page', () => {
 
     renderWithProviders(<Login />);
     
-    fireEvent.click(screen.getByText(/login as faculty/i));
+    // Select faculty role
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'wrong@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'wrongpass' } });
-    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    // Fill in login form with invalid credentials
+    const emailInput = screen.getByPlaceholderText(/email/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-    await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Invalid credentials'));
+    fireEvent.change(emailInput, { target: { value: 'wrong@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'wrongpass' } });
+    fireEvent.click(submitButton);
+
+    // Check for error message
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('Invalid credentials');
+    });
   });
 
   test('shows test account information', async () => {
     renderWithProviders(<Login />);
     
-    fireEvent.click(screen.getByText(/login as faculty/i));
+    // Select faculty role
+    const facultyButton = screen.getByText(/login as faculty/i);
+    fireEvent.click(facultyButton);
 
-    expect(await screen.findByText(/test accounts/i)).toBeInTheDocument();
-    expect(await screen.findByText(/faculty@test.com/i)).toBeInTheDocument();
-    expect(await screen.findByText(/incharge@test.com/i)).toBeInTheDocument();
-    expect(await screen.findByText(/hod@test.com/i)).toBeInTheDocument();
+    // Check for test account information
+    await waitFor(() => {
+      expect(screen.getByText(/test accounts/i)).toBeInTheDocument();
+      expect(screen.getByText(/faculty@test.com/i)).toBeInTheDocument();
+      expect(screen.getByText(/incharge@test.com/i)).toBeInTheDocument();
+      expect(screen.getByText(/hod@test.com/i)).toBeInTheDocument();
+    });
   });
-});
+}); 
