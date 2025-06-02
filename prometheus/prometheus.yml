@@ -2,6 +2,7 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: 'node-server'
+  - job_name: 'spacehub-server'
     static_configs:
-      - targets: ['host.docker.internal:5001']
+      - targets: ['spacehub-server:5001']
+

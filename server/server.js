@@ -34,6 +34,43 @@ if (process.env.NODE_ENV !== 'test') {
 
 const app = express();
 
+// Prometheus metrics setup
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({ timeout: 5000 });
+const register = client.register;
+
+// Add a simple counter metric
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'path', 'status']
+});
+
+// Metrics endpoint - FIRST route to be registered
+app.get('/metrics', async (req, res) => {
+  try {
+    console.log('Metrics endpoint called');
+    // Increment the counter for this request
+    httpRequestsTotal.inc({ method: req.method, path: req.path, status: '200' });
+    
+    // Get metrics
+    const metrics = await register.metrics();
+    console.log('Metrics generated successfully');
+    
+    // Set headers
+    res.set('Content-Type', register.contentType);
+    res.set('Cache-Control', 'no-cache');
+    
+    // Send response
+    res.status(200).send(metrics);
+  } catch (error) {
+    console.error('Error generating metrics:', error);
+    // Increment the counter for the error
+    httpRequestsTotal.inc({ method: req.method, path: req.path, status: '500' });
+    res.status(500).json({ error: 'Failed to generate metrics' });
+  }
+});
+
 // Configure CORS
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -45,20 +82,6 @@ app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
-
-// Prometheus metrics setup
-const collectDefaultMetrics = client.collectDefaultMetrics;
-collectDefaultMetrics();
-const register = client.register;
-
-app.get('/metrics', async (req, res) => {
-  try {
-    res.set('Content-Type', register.contentType);
-    res.end(await register.metrics());
-  } catch (err) {
-    res.status(500).end(err.message);
-  }
-});
 
 // Request logging middleware
 app.use((req, res, next) => {
