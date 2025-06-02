@@ -1,8 +1,6 @@
-export default {
-  testEnvironment: 'node',
-  transform: {
-    '^.+\\.js$': 'babel-jest',
-  },
+module.exports = {
+  testEnvironment: "node",
+  transform: {},
   setupFilesAfterEnv: ['./__tests__/setup.js'],
   testMatch: ['**/__tests__/**/*.test.js'],
   verbose: true,
@@ -10,4 +8,4 @@ export default {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-}; 
+};

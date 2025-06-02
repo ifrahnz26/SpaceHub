@@ -62,11 +62,9 @@ describe('Login Page', () => {
     fireEvent.click(facultyButton);
 
     // Check for login form elements
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument());
   });
 
   test('handles successful login', async () => {

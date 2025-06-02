@@ -95,5 +95,14 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-// Start the server
-connectDB();
+// Start the server only if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
+
+app.get('/', (req, res) => {
+  res.status(200).send('Server is running');
+});
+
+export default app;
+

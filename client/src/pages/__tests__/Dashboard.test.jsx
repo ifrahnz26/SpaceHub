@@ -71,13 +71,11 @@ describe('Dashboard Page', () => {
     });
 
     // Wait for loading to complete and check for statistics cards
-    await waitFor(() => {
-      expect(screen.getByText(/your booking statistics/i)).toBeInTheDocument();
-      expect(screen.getByText(/total bookings made/i)).toBeInTheDocument();
-      expect(screen.getByText(/approved bookings/i)).toBeInTheDocument();
-      expect(screen.getByText(/rejected bookings/i)).toBeInTheDocument();
-      expect(screen.getByText(/pending bookings/i)).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText(/your booking statistics/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/total bookings made/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/approved bookings/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/rejected bookings/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/pending bookings/i)).toBeInTheDocument());
 
     // Check for charts
     expect(screen.getByText(/booking status breakdown/i)).toBeInTheDocument();

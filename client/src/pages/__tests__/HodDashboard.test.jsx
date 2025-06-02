@@ -92,12 +92,10 @@ describe('HOD Dashboard Page', () => {
     renderWithProviders(<HodDashboard />);
 
     // Check for header content
-    await waitFor(() => {
-      expect(screen.getByText('HOD Dashboard')).toBeInTheDocument();
-      expect(screen.getByText('Department: Computer Science')).toBeInTheDocument();
-      expect(screen.getByText('Total Bookings:')).toBeInTheDocument();
-      expect(screen.getByText('2', { selector: 'span.text-xl' })).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText('HOD Dashboard')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Department: Computer Science')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Total Bookings:')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('2', { selector: 'span.text-xl' })).toBeInTheDocument());
 
     // Check for filter buttons
     expect(screen.getByRole('button', { name: /All 2/i })).toBeInTheDocument();

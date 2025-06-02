@@ -1,5 +1,5 @@
-const request = require('supertest');
-const app = require('../server');
+import request from 'supertest';
+import app from '../server.js';
 
 describe('Server Tests', () => {
   test('Server should be running', async () => {
