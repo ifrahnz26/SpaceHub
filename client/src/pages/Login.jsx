@@ -106,9 +106,13 @@ export default function Login() {
             <p className="text-lg text-gray-300 mb-6">
               Streamline your academic space reservations with our easy-to-use booking platform for labs and seminar halls.
             </p>
-            <a href="#login" className="inline-block bg-white text-dark font-semibold px-5 py-2 rounded hover:bg-gray-200">
+            <button
+              type="button"
+              className="inline-block bg-white text-dark font-semibold px-5 py-2 rounded hover:bg-gray-200"
+              onClick={() => document.getElementById('login')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Get Started
-            </a>
+            </button>
           </div>
         </div>
       </section>

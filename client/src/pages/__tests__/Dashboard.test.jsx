@@ -66,16 +66,14 @@ describe('Dashboard Page', () => {
     renderWithProviders(<Dashboard />);
 
     // Check for welcome message
-    await waitFor(() => {
-      expect(screen.getByText(/welcome, john doe!/i)).toBeInTheDocument();
-    });
+    await screen.findByText(/welcome, john doe!/i);
 
     // Wait for loading to complete and check for statistics cards
-    await waitFor(() => expect(screen.getByText(/your booking statistics/i)).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText(/total bookings made/i)).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText(/approved bookings/i)).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText(/rejected bookings/i)).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText(/pending bookings/i)).toBeInTheDocument());
+    await screen.findByText(/your booking statistics/i);
+    await screen.findByText(/total bookings made/i);
+    await screen.findByText(/approved bookings/i);
+    await screen.findByText(/rejected bookings/i);
+    await screen.findByText(/pending bookings/i);
 
     // Check for charts
     expect(screen.getByText(/booking status breakdown/i)).toBeInTheDocument();
@@ -126,8 +124,6 @@ describe('Dashboard Page', () => {
     renderWithProviders(<Dashboard />);
 
     // Check for error message
-    await waitFor(() => {
-      expect(screen.getByText(/failed to load your booking statistics/i)).toBeInTheDocument();
-    });
+    await screen.findByText(/failed to load your booking statistics/i);
   });
 }); 

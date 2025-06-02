@@ -5,7 +5,6 @@ export default function BlockSlotsForm({ resources, onBlock }) {
   const [date, setDate] = useState("");
   const [timeSlots, setTimeSlots] = useState([]);
   const [purpose, setPurpose] = useState("");
-  const { user } = useAuth();
   const token = localStorage.getItem("token");
 
   const allTimeSlots = [

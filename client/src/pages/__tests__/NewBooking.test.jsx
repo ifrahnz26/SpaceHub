@@ -74,9 +74,9 @@ describe('New Booking Page', () => {
     fireEvent.click(cseTab);
     
     // Wait for resources to load
-    await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('Resource 1')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('Resource 2')).toBeInTheDocument());
+    await screen.findByRole('combobox');
+    await screen.findByText('Resource 1');
+    await screen.findByText('Resource 2');
   });
 
   it('shows available time slots when resource and date are selected', async () => {
@@ -115,8 +115,8 @@ describe('New Booking Page', () => {
     });
 
     // Check for time slots
-    await waitFor(() => expect(screen.getByText('09:00 - 10:00')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('10:00 - 11:00')).toBeInTheDocument());
+    await screen.findByText('09:00 - 10:00');
+    await screen.findByText('10:00 - 11:00');
   });
 
   it('handles error when loading resources fails', async () => {
