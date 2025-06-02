@@ -1,14 +1,33 @@
-const request = require('supertest');
-const app = require('../server');
+import request from 'supertest';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import app from '../server.js';
+
+dotenv.config();
+
+beforeAll(async () => {
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/booking_system');
+}, 20000);
+
+afterEach(async () => {
+  const collections = Object.keys(mongoose.connection.collections);
+  for (const collectionName of collections) {
+    await mongoose.connection.collections[collectionName].deleteMany({});
+  }
+}, 20000);
+
+afterAll(async () => {
+  await mongoose.connection.close();
+}, 20000);
 
 describe('Server Tests', () => {
-  test('Server should be running', async () => {
-    const response = await request(app).get('/');
-    expect(response.status).toBe(200);
+  it('Server should be running', async () => {
+    const res = await request(app).get('/'); // ✅ Working route
+    expect(res.statusCode).toBe(200);
   });
 
-  test('404 handler for non-existent routes', async () => {
-    const response = await request(app).get('/non-existent-route');
-    expect(response.status).toBe(404);
+  it('404 handler for non-existent routes', async () => {
+    const res = await request(app).get('/api/unknown');
+    expect(res.statusCode).toBe(404);
   });
-}); 
+});
