@@ -36,8 +36,9 @@ const app = express();
 
 // ✅ CORS Configuration
 const allowedOrigins = [
-  "https://timora-client.vercel.app", // your deployed frontend
-  "http://localhost:3000",            // local dev
+  "https://timora-client.vercel.app",
+  "http://localhost:3000",
+  "https://timora-client-il83u2ud3-ifrahs-projects-46f27517.vercel.app",
 ];
 
 const corsOptions = {
@@ -48,12 +49,14 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 /* ---------------- Prometheus Setup ---------------- */
