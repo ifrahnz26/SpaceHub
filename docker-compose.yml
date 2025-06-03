@@ -1,18 +1,26 @@
 version: '3.8'
 
 services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
   server:
     image: lekhya04/spacehub-server:latest
     container_name: spacehub-server
     ports:
       - "5001:5001"
     environment:
-      - MONGO_URI=mongodb://host.docker.internal:27017/booking_system
+      - MONGO_URI=mongodb://mongo:27017/booking_system
       - JWT_SECRET=supersecretkey123
       - NODE_ENV=production
       - PORT=5001
     depends_on:
-      - client
+      - mongo
 
   client:
     image: lekhya04/spacehub-client:latest
@@ -27,3 +35,6 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+volumes:
+  mongo-data:
