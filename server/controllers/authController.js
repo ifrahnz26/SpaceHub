@@ -60,7 +60,10 @@ export const register = async (req, res) => {
 // ✅ Login Controller
 export const login = async (req, res) => {
   try {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
+    console.log("💡 Login attempt:", email); // Add this line
+  
+
 
     // Check if user exists
     const user = await User.findOne({ email });
