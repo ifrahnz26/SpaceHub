@@ -1,9 +1,9 @@
 // API URL configuration
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 
-// Helper function to construct API URLs
 export const getApiUrl = (endpoint) => {
-  return `${API_BASE_URL}${endpoint}`;
+  // Remove trailing slash from base, and leading slash from endpoint, then join with single slash
+  return `${API_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 };
 
 // Common API endpoints
