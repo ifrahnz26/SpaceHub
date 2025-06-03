@@ -5,9 +5,9 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import client from "prom-client";
+import client from "prom-client"; // ✅ Prometheus client
 
-// Route handlers
+// Import route handlers
 import authRoutes from "./routes/auth.js";
 import bookingRoutes from "./routes/bookings.js";
 import resourceRoutes from "./routes/resources.js";
@@ -15,51 +15,38 @@ import userRoutes from "./routes/users.js";
 import eventRoutes from "./routes/events.js";
 import { verifyToken } from "./middleware/auth.js";
 
-// Resolve __dirname in ES module
+// Resolve __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load env variables
+// Load environment variables
 dotenv.config();
 
-// Check required env vars
+// Validate required environment variables
 if (process.env.NODE_ENV !== "test") {
-  const required = ["PORT", "MONGO_URI", "JWT_SECRET"];
-  const missing = required.filter((key) => !process.env[key]);
-  if (missing.length) {
-    console.error("Missing required env vars:", missing);
+  const requiredEnvVars = ["PORT", "MONGO_URI", "JWT_SECRET"];
+  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+  if (missingEnvVars.length > 0) {
+    console.error("Missing required environment variables:", missingEnvVars);
     process.exit(1);
   }
 }
 
 const app = express();
 
-// ✅ CORS Configuration
-const allowedOrigins = [
-  "https://timora-client.vercel.app",
-  "http://localhost:3000",
-  "https://timora-client-il83u2ud3-ifrahs-projects-46f27517.vercel.app",
-];
-
+// Configure CORS
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
-
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+
+// Middleware
 app.use(express.json());
 
-/* ---------------- Prometheus Setup ---------------- */
+// ✅ Prometheus metrics setup
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
 
@@ -86,6 +73,7 @@ register.registerMetric(httpRequestCount);
 register.registerMetric(httpRequestDuration);
 register.registerMetric(memoryUsageGauge);
 
+// ✅ Custom middleware to track requests
 app.use((req, res, next) => {
   const end = httpRequestDuration.startTimer();
   res.on("finish", () => {
@@ -95,6 +83,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ Track memory usage
 setInterval(() => {
   const mem = process.memoryUsage();
   for (const key in mem) {
@@ -102,22 +91,25 @@ setInterval(() => {
   }
 }, 10000);
 
-/* ---------------- Routes ---------------- */
+// Request logging middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
+// API route definitions
 app.use("/api/auth", authRoutes);
 app.use("/api/users", verifyToken, userRoutes);
 app.use("/api/bookings", verifyToken, bookingRoutes);
 app.use("/api/resources", verifyToken, resourceRoutes);
 app.use("/api/events", verifyToken, eventRoutes);
 
+// Root test endpoint
 app.get("/", (req, res) => {
   res.status(200).send("Server is running");
 });
 
+// Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -126,23 +118,24 @@ app.get("/health", (req, res) => {
   });
 });
 
+// ✅ /metrics endpoint for Prometheus
 app.get("/metrics", async (req, res) => {
   res.set("Content-Type", register.contentType);
   res.end(await register.metrics());
 });
 
-/* ---------------- Error Handler ---------------- */
+// Error handler
 app.use((err, req, res, next) => {
   console.error("Error:", err);
-  const status = err.statusCode || 500;
+  const statusCode = err.statusCode || 500;
   const message = err.message || "Something went wrong!";
-  res.status(status).json({
+  res.status(statusCode).json({
     error: message,
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
 
-/* ---------------- Static Client (if built) ---------------- */
+// Serve React frontend build
 const buildPath = path.join(__dirname, "./client/build");
 if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
@@ -154,9 +147,8 @@ if (fs.existsSync(buildPath)) {
   });
 }
 
-/* ---------------- Connect to DB and Start Server ---------------- */
+// Start server
 const PORT = process.env.PORT || 5001;
-
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
