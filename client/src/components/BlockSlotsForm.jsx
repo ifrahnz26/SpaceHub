@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function BlockSlotsForm({ resources, onBlock }) {
   const [date, setDate] = useState("");
@@ -33,7 +34,7 @@ export default function BlockSlotsForm({ resources, onBlock }) {
     }
 
     try {
-      const response = await fetch("http://localhost:5001/api/bookings/block", {
+      const response = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.BLOCK), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

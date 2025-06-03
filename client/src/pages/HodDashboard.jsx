@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function HodDashboard() {
   const [bookings, setBookings] = useState([]);
@@ -14,7 +15,7 @@ export default function HodDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("http://localhost:5001/api/bookings/hod", {
+        const res = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.HOD), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -40,7 +41,7 @@ export default function HodDashboard() {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5001/api/bookings/${id}/status`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.BOOKINGS.BASE}/${id}/status`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

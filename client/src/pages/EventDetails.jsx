@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function EventDetails() {
   const [events, setEvents] = useState([]);
@@ -11,7 +12,7 @@ export default function EventDetails() {
   useEffect(() => {
     const fetchVenues = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/resources", {
+        const res = await fetch(getApiUrl(API_ENDPOINTS.RESOURCES.BASE), {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -34,7 +35,7 @@ export default function EventDetails() {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5001/api/events", {
+        const res = await fetch(getApiUrl(API_ENDPOINTS.EVENTS.BASE), {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

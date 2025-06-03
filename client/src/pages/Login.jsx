@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import campusBg from "../assets/images/college.jpg";
 import computerLabImg from "../assets/images/resources/computer-lab.avif";
 import seminarHallImg from "../assets/images/resources/seminar-hall.avif";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function Login() {
   const [role, setRole] = useState("");
@@ -24,7 +25,7 @@ export default function Login() {
   useEffect(() => {
     const fetchVenues = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/resources");
+        const res = await fetch(getApiUrl(API_ENDPOINTS.RESOURCES.BASE));
         const data = await res.json();
         if (res.ok) setVenues(data);
       } catch (err) {
@@ -43,13 +44,13 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const endpoint =
-      tab === "login"
-        ? "http://localhost:5001/api/auth/login"
-        : "http://localhost:5001/api/auth/register";
+    const isLogin = tab === "login";
+    const url = isLogin 
+      ? getApiUrl(API_ENDPOINTS.AUTH.LOGIN)
+      : getApiUrl(API_ENDPOINTS.AUTH.REGISTER);
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, role }),

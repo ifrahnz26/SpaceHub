@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function VenueDashboard() {
   const [assignedResource, setAssignedResource] = useState(null);
@@ -19,7 +20,7 @@ export default function VenueDashboard() {
         return;
       }
 
-      const res = await fetch(`http://localhost:5001/api/resources/${user.assignedVenueId}`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.RESOURCES.BASE}/${user.assignedVenueId}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -43,7 +44,7 @@ export default function VenueDashboard() {
       console.log("Fetching stats for venue:", user.assignedVenueId);
 
       // Fetch events for the venue
-      const eventsRes = await fetch(`http://localhost:5001/api/events`, {
+      const eventsRes = await fetch(getApiUrl(API_ENDPOINTS.EVENTS.BASE), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const eventsData = await eventsRes.json();
@@ -69,7 +70,7 @@ export default function VenueDashboard() {
         console.log("Total duration:", totalDuration);
 
         // Fetch bookings for the venue
-        const bookingsRes = await fetch(`http://localhost:5001/api/bookings`, {
+        const bookingsRes = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.BASE), {
           headers: { Authorization: `Bearer ${token}` },
         });
         const bookingsData = await bookingsRes.json();

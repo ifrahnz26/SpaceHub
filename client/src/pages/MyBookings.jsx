@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
@@ -12,7 +13,7 @@ export default function MyBookings() {
     setError(null);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:5001/api/bookings/my", {
+      const res = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.MY), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,7 +43,7 @@ export default function MyBookings() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5001/api/bookings/${bookingId}`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.BOOKINGS.BASE}/${bookingId}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

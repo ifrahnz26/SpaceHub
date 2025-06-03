@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext';
 import HodDashboard from '../HodDashboard';
+import { getApiUrl, API_ENDPOINTS } from '../../utils/api';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -158,9 +159,10 @@ describe('HOD Dashboard Page', () => {
     fireEvent.click(approveButton);
 
     // Check if status was updated
+    const url = getApiUrl(`${API_ENDPOINTS.BOOKINGS.BASE}/1/status`);
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:5001/api/bookings/1/status',
+        url,
         expect.objectContaining({
           method: 'PATCH',
           headers: expect.objectContaining({

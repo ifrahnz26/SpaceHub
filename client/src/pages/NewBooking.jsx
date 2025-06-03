@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 const departments = ["CSE", "ISE", "AIML"];
 
@@ -22,7 +23,7 @@ export default function NewBooking() {
   const fetchResources = useCallback(async () => {
     try {
       console.log("Fetching resources for department:", selectedDept);
-      const res = await fetch(`http://localhost:5001/api/resources/department/${selectedDept}`, {
+      const res = await fetch(getApiUrl(`${API_ENDPOINTS.RESOURCES.DEPARTMENT}/${selectedDept}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -45,12 +46,9 @@ export default function NewBooking() {
     const fetchAvailableSlots = async () => {
       if (!form.resourceId || !form.date) return;
       try {
-        const res = await fetch(
-          `http://localhost:5001/api/bookings/available-slots?resourceId=${form.resourceId}&date=${form.date}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch(getApiUrl(`${API_ENDPOINTS.BOOKINGS.AVAILABLE_SLOTS}?resourceId=${form.resourceId}&date=${form.date}`), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         setAvailableSlots(data.availableSlots || []);
       } catch (err) {
@@ -86,7 +84,7 @@ export default function NewBooking() {
     };
 
     try {
-      const res = await fetch("http://localhost:5001/api/bookings", {
+      const res = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.BASE), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
