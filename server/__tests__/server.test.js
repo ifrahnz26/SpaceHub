@@ -6,7 +6,7 @@ import app from '../server.js';
 dotenv.config();
 
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/booking_system');
+  await mongoose.connect(process.env.MONGO_URI);
 }, 20000);
 
 afterEach(async () => {
