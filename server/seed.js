@@ -11,7 +11,7 @@ dotenv.config();
 const createDummyData = async () => {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/booking_system");
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://timorauser:timorapass123@timora.zygerj1.mongodb.net/?retryWrites=true&w=majority&appName=Timora');
     console.log("Connected to MongoDB - booking_system database");
 
     // Clear existing data

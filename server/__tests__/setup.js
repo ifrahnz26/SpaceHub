@@ -5,7 +5,7 @@ dotenv.config();
 
 beforeAll(async () => {
   // Connect to test database
-  await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/booking_system');
+  await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://timorauser:timorapass123@timora.zygerj1.mongodb.net/?retryWrites=true&w=majority&appName=Timora');
 });
 
 afterAll(async () => {

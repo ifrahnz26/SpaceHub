@@ -48,7 +48,7 @@ jobs:
         run: |
           cd server
           echo "PORT=5001" > .env
-          echo "MONGO_URI=mongodb://localhost:27017/booking_system" >> .env
+          echo "MONGO_URI=mongodb+srv://timorauser:timorapass123@timora.zygerj1.mongodb.net/?retryWrites=true&w=majority&appName=Timora" >> .env
           echo "JWT_SECRET=supersecretkey123" >> .env
           echo "NODE_ENV=test" >> .env
 
