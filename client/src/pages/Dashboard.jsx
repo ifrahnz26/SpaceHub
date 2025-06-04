@@ -4,7 +4,6 @@ import VenueDashboard from "./VenueDashboard";
 import { useAuth } from "../context/AuthContext";
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
-import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -29,7 +28,7 @@ export default function Dashboard() {
 
     setLoadingStats(true);
     try {
-      const res = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.MY), {
+      const res = await fetch("http://localhost:5001/api/bookings/my", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const bookingsData = await res.json();

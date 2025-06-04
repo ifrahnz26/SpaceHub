@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function VenueSchedule() {
   const [schedule, setSchedule] = useState([]);
@@ -47,7 +46,7 @@ export default function VenueSchedule() {
       }
 
       try {
-        const res = await fetch(getApiUrl(API_ENDPOINTS.RESOURCES.BASE), {
+        const res = await fetch("http://localhost:5001/api/resources", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -78,7 +77,7 @@ export default function VenueSchedule() {
         // Fetch schedule for the entire week
         const promises = weekDates.map(date => 
           fetch(
-            getApiUrl(`${API_ENDPOINTS.BOOKINGS.VENUE_SCHEDULE}?venueId=${selectedVenueId}&date=${date}`),
+            `http://localhost:5001/api/bookings/venue-schedule?venueId=${selectedVenueId}&date=${date}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }

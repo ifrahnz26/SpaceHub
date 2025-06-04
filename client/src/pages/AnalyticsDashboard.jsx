@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement } from 'chart.js';
-import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement);
@@ -40,25 +39,25 @@ export default function AnalyticsDashboard() {
     setLoadingStats(true);
     try {
       // Fetch all events
-      const eventsRes = await fetch(getApiUrl(API_ENDPOINTS.EVENTS.BASE), {
+      const eventsRes = await fetch("http://localhost:5001/api/events", { 
         headers: { Authorization: `Bearer ${token}` },
       });
       const eventsData = await eventsRes.json();
 
       // Fetch all users
-      const usersRes = await fetch(getApiUrl(API_ENDPOINTS.USERS.ALL), {
+      const usersRes = await fetch("http://localhost:5001/api/users/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const usersData = await usersRes.json();
 
       // Fetch all bookings for analytics
-      const bookingsRes = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.ANALYTICS_ALL), {
+      const bookingsRes = await fetch("http://localhost:5001/api/bookings/analytics-all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allBookingsData = await bookingsRes.json();
 
       // Fetch all resources
-      const resourcesRes = await fetch(getApiUrl(API_ENDPOINTS.RESOURCES.ALL), {
+      const resourcesRes = await fetch("http://localhost:5001/api/resources/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const resourcesData = await resourcesRes.json();

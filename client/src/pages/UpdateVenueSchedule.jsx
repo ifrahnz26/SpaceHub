@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import BlockSlotsForm from "../components/BlockSlotsForm";
-import { getApiUrl, API_ENDPOINTS } from '../utils/api';
 
 export default function UpdateVenueSchedule() {
   const [assignedResource, setAssignedResource] = useState(null);
@@ -18,7 +17,7 @@ export default function UpdateVenueSchedule() {
         return;
       }
 
-      const res = await fetch(getApiUrl(`${API_ENDPOINTS.RESOURCES.BASE}/${user.assignedVenueId}`), {
+      const res = await fetch(`http://localhost:5001/api/resources/${user.assignedVenueId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -43,7 +42,7 @@ export default function UpdateVenueSchedule() {
         return;
       }
 
-      const res = await fetch(getApiUrl(API_ENDPOINTS.BOOKINGS.INCHARGE), {
+      const res = await fetch(`http://localhost:5001/api/bookings/incharge`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -63,7 +62,7 @@ export default function UpdateVenueSchedule() {
   // ✅ Handle unblock slot
   const handleUnblock = async (bookingId) => {
     try {
-      const res = await fetch(getApiUrl(`${API_ENDPOINTS.BOOKINGS.BLOCK}/${bookingId}`), {
+      const res = await fetch(`http://localhost:5001/api/bookings/block/${bookingId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
