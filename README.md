@@ -1,4 +1,4 @@
-# 🏫 University Laboratory & Seminar Hall Booking System
+# 🏫Timora - University Venue Booking System
 
 A role-based MERN stack web application for digital booking and management of university labs and seminar halls.
 
@@ -31,7 +31,7 @@ This system allows students, faculty, venue incharges, and HODs to manage room b
 ### 1️⃣ Clone the repo
 
 ```bash
-git clone https://github.com/your-repo/university-booking-system.git
+git clone https://github.com/ifrahnz26/timora.git
 cd university-booking-system
 ```
 
