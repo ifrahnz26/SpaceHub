@@ -160,7 +160,7 @@ describe('HOD Dashboard Page', () => {
     // Check if status was updated
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:5001/api/bookings/1/status',
+        'https://timoraworld.netlify.app/api/bookings/1/status',
         expect.objectContaining({
           method: 'PATCH',
           headers: expect.objectContaining({
