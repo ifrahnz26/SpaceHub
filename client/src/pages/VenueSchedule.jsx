@@ -9,6 +9,7 @@ export default function VenueSchedule() {
   const [selectedVenueId, setSelectedVenueId] = useState("");
   const { user } = useAuth();
   const token = localStorage.getItem("token");
+  const API = process.env.REACT_APP_API_URL;
 
   const timeSlots = [
     "09:00 - 10:00",
@@ -46,7 +47,7 @@ export default function VenueSchedule() {
       }
 
       try {
-        const res = await fetch("http://localhost:5001/api/resources", {
+        const res = await fetch(`${API}/resources`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -77,7 +78,7 @@ export default function VenueSchedule() {
         // Fetch schedule for the entire week
         const promises = weekDates.map(date => 
           fetch(
-            `http://localhost:5001/api/bookings/venue-schedule?venueId=${selectedVenueId}&date=${date}`,
+            `${API}/bookings/venue-schedule?venueId=${selectedVenueId}&date=${date}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }

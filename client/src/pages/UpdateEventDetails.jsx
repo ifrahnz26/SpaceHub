@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/AuthContext";
 
+const API = process.env.REACT_APP_API_URL;
+
 export default function UpdateEventDetails() {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -30,7 +32,7 @@ export default function UpdateEventDetails() {
 
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:5001/api/resources/${user.assignedVenueId}`, {
+        const res = await fetch(`${API}/resources/${user.assignedVenueId}`, {
           hheaders: {
             'Authorization': `Bearer ${token}`,
           },
@@ -54,7 +56,7 @@ export default function UpdateEventDetails() {
       const fetchEventDetails = async () => {
         try {
           const token = localStorage.getItem('token');
-          const res = await fetch(`http://localhost:5001/api/events/${eventId}`, {
+          const res = await fetch(`${API}/events/${eventId}`, {
             headers: {
               'Authorization': `Bearer ${token}'`,
             },
@@ -141,7 +143,7 @@ export default function UpdateEventDetails() {
 
     try {
       const token = localStorage.getItem('token');
-      const url = eventId ? `http://localhost:5001/api/events/${eventId}` : 'http://localhost:5001/api/events';
+      const url = eventId ? `${API}/events/${eventId}` : `${API}/events`;
       const method = eventId ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {

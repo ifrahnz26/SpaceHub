@@ -7,12 +7,14 @@ export default function MyBookings() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const API = process.env.REACT_APP_API_URL;
+
   const fetchBookings = async () => {
     setLoading(true);
     setError(null);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:5001/api/bookings/my", {
+      const res = await fetch(`${API}/bookings/my`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,7 +44,7 @@ export default function MyBookings() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5001/api/bookings/${bookingId}`, {
+      const res = await fetch(`${API}/bookings/${bookingId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

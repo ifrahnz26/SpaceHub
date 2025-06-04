@@ -11,6 +11,7 @@ export default function VenueDashboard() {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const token = localStorage.getItem("token");
+  const API = process.env.REACT_APP_API_URL;
 
   const fetchResources = useCallback(async () => {
     try {
@@ -19,7 +20,7 @@ export default function VenueDashboard() {
         return;
       }
 
-      const res = await fetch(`http://localhost:5001/api/resources/${user.assignedVenueId}`, {
+      const res = await fetch(`${API}/resources/${user.assignedVenueId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -34,7 +35,7 @@ export default function VenueDashboard() {
       console.error("Failed to load assigned resource", err);
       setError("Failed to load venue details");
     }
-  }, [user?.assignedVenueId, token]);
+  }, [user?.assignedVenueId, token, API]);
 
   const fetchVenueStats = useCallback(async () => {
     try {
@@ -43,7 +44,7 @@ export default function VenueDashboard() {
       console.log("Fetching stats for venue:", user.assignedVenueId);
 
       // Fetch events for the venue
-      const eventsRes = await fetch(`http://localhost:5001/api/events`, {
+      const eventsRes = await fetch(`${API}/events`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const eventsData = await eventsRes.json();
@@ -69,7 +70,7 @@ export default function VenueDashboard() {
         console.log("Total duration:", totalDuration);
 
         // Fetch bookings for the venue
-        const bookingsRes = await fetch(`http://localhost:5001/api/bookings`, {
+        const bookingsRes = await fetch(`${API}/bookings`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const bookingsData = await bookingsRes.json();
@@ -102,7 +103,7 @@ export default function VenueDashboard() {
     } catch (err) {
       console.error("Failed to load venue statistics:", err);
     }
-  }, [user?.assignedVenueId, token]);
+  }, [user?.assignedVenueId, token, API]);
 
   useEffect(() => {
     if (user?.assignedVenueId) {

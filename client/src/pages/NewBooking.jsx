@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 const departments = ["CSE", "ISE", "AIML"];
 
+const API = process.env.REACT_APP_API_URL;
+
 export default function NewBooking() {
   const [selectedDept, setSelectedDept] = useState("CSE");
   const [resources, setResources] = useState([]);
@@ -22,7 +24,7 @@ export default function NewBooking() {
   const fetchResources = useCallback(async () => {
     try {
       console.log("Fetching resources for department:", selectedDept);
-      const res = await fetch(`http://localhost:5001/api/resources/department/${selectedDept}`, {
+      const res = await fetch(`${API}/resources/department/${selectedDept}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -46,7 +48,7 @@ export default function NewBooking() {
       if (!form.resourceId || !form.date) return;
       try {
         const res = await fetch(
-          `http://localhost:5001/api/bookings/available-slots?resourceId=${form.resourceId}&date=${form.date}`,
+          `${API}/bookings/available-slots?resourceId=${form.resourceId}&date=${form.date}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -86,7 +88,7 @@ export default function NewBooking() {
     };
 
     try {
-      const res = await fetch("http://localhost:5001/api/bookings", {
+      const res = await fetch(`${API}/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

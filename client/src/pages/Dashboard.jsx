@@ -23,12 +23,14 @@ export default function Dashboard() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState(null);
 
+  const API = process.env.REACT_APP_API_URL;
+
   const fetchFacultyStats = useCallback(async (year) => {
     if (user?.role !== 'Faculty') return;
 
     setLoadingStats(true);
     try {
-      const res = await fetch("http://localhost:5001/api/bookings/my", {
+      const res = await fetch(`${API}/bookings/my`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const bookingsData = await res.json();
@@ -90,7 +92,7 @@ export default function Dashboard() {
     } finally {
       setLoadingStats(false);
     }
-  }, [user, token]);
+  }, [user, token, API]);
 
   useEffect(() => {
     if (user?.role === 'Faculty') {

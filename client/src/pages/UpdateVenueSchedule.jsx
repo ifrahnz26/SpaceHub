@@ -8,6 +8,7 @@ export default function UpdateVenueSchedule() {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const token = localStorage.getItem("token");
+  const API = process.env.REACT_APP_API_URL;
 
   // ✅ Fetch the specific venue assigned to this incharge
   const fetchResources = useCallback(async () => {
@@ -17,7 +18,7 @@ export default function UpdateVenueSchedule() {
         return;
       }
 
-      const res = await fetch(`http://localhost:5001/api/resources/${user.assignedVenueId}`, {
+      const res = await fetch(`${API}/resources/${user.assignedVenueId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -32,7 +33,7 @@ export default function UpdateVenueSchedule() {
       console.error("Failed to load assigned resource", err);
       setError("Failed to load venue details");
     }
-  }, [user?.assignedVenueId, token]);
+  }, [user?.assignedVenueId, token, API]);
 
   // ✅ Fetch bookings (including blocked) for the incharge's department
   const fetchBookings = useCallback(async () => {
@@ -42,7 +43,7 @@ export default function UpdateVenueSchedule() {
         return;
       }
 
-      const res = await fetch(`http://localhost:5001/api/bookings/incharge`, {
+      const res = await fetch(`${API}/bookings/incharge`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -57,12 +58,12 @@ export default function UpdateVenueSchedule() {
       console.error("Failed to load bookings", err);
       setError("Failed to load bookings");
     }
-  }, [user?.department, user?.assignedVenueId, token]);
+  }, [user?.department, user?.assignedVenueId, token, API]);
 
   // ✅ Handle unblock slot
   const handleUnblock = async (bookingId) => {
     try {
-      const res = await fetch(`http://localhost:5001/api/bookings/block/${bookingId}`, {
+      const res = await fetch(`${API}/bookings/block/${bookingId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

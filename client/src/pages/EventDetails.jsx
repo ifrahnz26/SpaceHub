@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+const API = process.env.REACT_APP_API_URL;
+
 export default function EventDetails() {
   const [events, setEvents] = useState([]);
   const [venues, setVenues] = useState([]);
@@ -11,7 +13,7 @@ export default function EventDetails() {
   useEffect(() => {
     const fetchVenues = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/resources", {
+        const res = await fetch(`${API}/resources`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -34,7 +36,7 @@ export default function EventDetails() {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5001/api/events", {
+        const res = await fetch(`${API}/events`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

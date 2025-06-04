@@ -5,6 +5,8 @@ import campusBg from "../assets/images/college.jpg";
 import computerLabImg from "../assets/images/resources/computer-lab.avif";
 import seminarHallImg from "../assets/images/resources/seminar-hall.avif";
 
+const API = process.env.REACT_APP_API_URL;
+
 export default function Login() {
   const [role, setRole] = useState("");
   const [tab, setTab] = useState("login");
@@ -24,7 +26,7 @@ export default function Login() {
   useEffect(() => {
     const fetchVenues = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/resources");
+        const res = await fetch(`${API}/resources`);
         const data = await res.json();
         if (res.ok) setVenues(data);
       } catch (err) {
@@ -43,13 +45,10 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const endpoint =
-      tab === "login"
-        ? "http://localhost:5001/api/auth/login"
-        : "http://localhost:5001/api/auth/register";
+    const loginUrl = tab === "login" ? `${API}/auth/login` : `${API}/auth/register`;
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(loginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, role }),

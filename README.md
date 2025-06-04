@@ -146,7 +146,7 @@ npm start
 Create a `.env` file in `/server`:
 
 ```
-MONGO_URI=mongodb://localhost:27017/university_booking
+MONGO_URI=mongodb+srv://your-production-mongodb-uri
 SESSION_SECRET=yourSecretKey
 ```
 

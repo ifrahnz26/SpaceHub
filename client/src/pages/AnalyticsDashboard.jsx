@@ -6,6 +6,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement);
 
+const API = process.env.REACT_APP_API_URL;
+
 export default function AnalyticsDashboard() {
   // State for college-wide statistics
   const [collegeStats, setCollegeStats] = useState({
@@ -39,25 +41,25 @@ export default function AnalyticsDashboard() {
     setLoadingStats(true);
     try {
       // Fetch all events
-      const eventsRes = await fetch("http://localhost:5001/api/events", { 
+      const eventsRes = await fetch(`${API}/events`, { 
         headers: { Authorization: `Bearer ${token}` },
       });
       const eventsData = await eventsRes.json();
 
       // Fetch all users
-      const usersRes = await fetch("http://localhost:5001/api/users/all", {
+      const usersRes = await fetch(`${API}/users/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const usersData = await usersRes.json();
 
       // Fetch all bookings for analytics
-      const bookingsRes = await fetch("http://localhost:5001/api/bookings/analytics-all", {
+      const bookingsRes = await fetch(`${API}/bookings/analytics-all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allBookingsData = await bookingsRes.json();
 
       // Fetch all resources
-      const resourcesRes = await fetch("http://localhost:5001/api/resources/all", {
+      const resourcesRes = await fetch(`${API}/resources/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const resourcesData = await resourcesRes.json();

@@ -24,7 +24,7 @@ dotenv.config();
 
 // Validate required environment variables
 if (process.env.NODE_ENV !== "test") {
-  const requiredEnvVars = ["PORT", "MONGO_URI", "JWT_SECRET"];
+  const requiredEnvVars = ["PORT", "MONGO_URI", "JWT_SECRET", "CORS_ORIGIN"];
   const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
   if (missingEnvVars.length > 0) {
     console.error("Missing required environment variables:", missingEnvVars);
@@ -36,7 +36,7 @@ const app = express();
 
 // Configure CORS
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  origin: process.env.CORS_ORIGIN,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -155,7 +155,7 @@ const connectDB = async () => {
     console.log("✅ Connected to MongoDB");
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
-      console.log(`✅ Prometheus metrics at: http://localhost:${PORT}/metrics`);
+      console.log(`✅ Prometheus metrics at: /metrics`);
     });
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);

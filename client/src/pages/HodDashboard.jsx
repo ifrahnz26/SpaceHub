@@ -8,13 +8,14 @@ export default function HodDashboard() {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const token = localStorage.getItem("token");
+  const API = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("http://localhost:5001/api/bookings/hod", {
+        const res = await fetch(`${API}/bookings/hod`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -40,7 +41,7 @@ export default function HodDashboard() {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:5001/api/bookings/${id}/status`, {
+      const res = await fetch(`${API}/bookings/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
