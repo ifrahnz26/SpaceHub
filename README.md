@@ -56,15 +56,87 @@ npm start
 ## 📁 Folder Structure
 
 ```
-/client
-  /src/pages
-  /src/components
-  /src/context
-/server
-  /models
-  /routes
-  /middleware
-  server.js
+├── .git/
+├── .github/
+├── client/
+│   ├── __tests__/
+│   ├── build/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── BlockSlotsForm.jsx
+│   │   │   ├── Carousel.jsx
+│   │   │   ├── Layout.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   └── Topbar.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── __tests__/
+│   │   │   ├── AnalyticsDashboard.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── EventDetails.jsx
+│   │   │   ├── HodDashboard.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── MyBookings.jsx
+│   │   │   ├── NewBooking.jsx
+│   │   │   ├── RoleBasedDashboard.jsx
+│   │   │   ├── UpdateEventDetails.jsx
+│   │   │   ├── UpdateVenueSchedule.jsx
+│   │   │   ├── VenueDashboard.jsx
+│   │   │   └── VenueSchedule.jsx
+│   │   ├── utils/
+│   │   │   └── test-utils.jsx
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   ├── index.js
+│   │   └── setupTests.js
+│   ├── Dockerfile
+│   ├── .babelrc
+│   ├── .gitignore
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── README.md
+│   └── tailwind.config.js
+├── node_modules/
+├── postman/
+│   ├── collection.json
+│   └── environment.json
+├── prometheus/
+│   └── prometheus.yml
+├── server/
+│   ├── __tests__/
+│   ├── uploads/
+│   ├── scripts/
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── bookings.js
+│   │   ├── events.js
+│   │   ├── resources.js
+│   │   └── users.js
+│   ├── models/
+│   │   ├── Booking.js
+│   │   ├── Event.js
+│   │   ├── Resource.js
+│   │   └── User.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── verifyToken.js
+│   ├── controllers/
+│   │   └── authController.js
+│   ├── server.js
+│   ├── seed.js
+│   ├── package.json
+│   ├── Dockerfile
+│   ├── .babelrc
+│   └── jest.config.cjs
+├── .dockerignore
+├── .gitignore
+├── docker-compose.yml
+├── package-lock.json
+├── package.json
+└── README.md
 ```
 
 ---
