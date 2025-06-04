@@ -1,5 +1,5 @@
 [build]
-  command = "npm run --prefix client build"
+  command = "CI='' npm run --prefix client build"
   publish = "client/build"
 
 [[redirects]]
