@@ -6,6 +6,9 @@ import HodDashboard from '../HodDashboard';
 // Mock fetch
 global.fetch = jest.fn();
 
+// Mock environment variables
+process.env.REACT_APP_API_URL = 'https://timoraworld.netlify.app';
+
 // Mock localStorage
 const mockLocalStorage = {
   getItem: jest.fn(),
@@ -160,7 +163,7 @@ describe('HOD Dashboard Page', () => {
     // Check if status was updated
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        'https://timoraworld.netlify.app/api/bookings/1/status',
+        `${process.env.REACT_APP_API_URL}/api/bookings/1/status`,
         expect.objectContaining({
           method: 'PATCH',
           headers: expect.objectContaining({
